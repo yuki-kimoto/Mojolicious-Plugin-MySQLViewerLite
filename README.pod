@@ -48,3 +48,9 @@ to the following place.
     lib/Mojolicious/Plugin/MysqlViewerCheap.pm
 
 lib must be included in @INC.
+
+=head1 CAUTION
+
+I want a perl tool like phpMyAdmin. but I don't have the time to create it.
+so this tool is not so good to use.
+but i think this is good example of Mojolicious plugin.
