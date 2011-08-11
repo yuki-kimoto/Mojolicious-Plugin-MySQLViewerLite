@@ -8,7 +8,7 @@ Mojolicious::Plugin::MysqlViewerCheap
     plugin 'mysql_viewer_cheap' dbh => $dbh;
 
     # Mojolicious
-    $app->plugin('mysql_viewer_sheap', dbh => $dbh);
+    $app->plugin('mysql_viewer_cheap', dbh => $dbh);
 
     # Access
     http://localhost:3000/mysqlviewer
