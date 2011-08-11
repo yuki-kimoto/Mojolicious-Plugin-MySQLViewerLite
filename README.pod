@@ -4,15 +4,14 @@ Mojolicious::Plugin::MysqlViewerCheap
 
 =head1 SYNOPSYS
 
-# Mojolicious::Lite
-plugin 'mysql_viewer_cheap' dbh => $dbh;
+    # Mojolicious::Lite
+    plugin 'mysql_viewer_cheap' dbh => $dbh;
 
-# Mojolicious
-$app->plugin('mysql_viewer_sheap', dbh => $dbh);
+    # Mojolicious
+    $app->plugin('mysql_viewer_sheap', dbh => $dbh);
 
-# Access
-
-http://localhost:3000/mysqlviewer
+    # Access
+    http://localhost:3000/mysqlviewer
 
 =head1 DESCRIPTION
 
