@@ -39,12 +39,12 @@ You can see primary key, null allowed column, and database engine of all tables.
 
 Mojolicious::Plugin::MysqlViewerCheap need the following module.
 
-cpan DBIx::Custom;
-cpan Validator::Custom;
+    cpan DBIx::Custom;
+    cpan Validator::Custom;
 
 And you copy Mojolicious::Plugin::MysqlViewerCheap source code
 to the following place.
 
-lib/Mojolicious/Plugin/MysqlViewerCheap.pm
+    lib/Mojolicious/Plugin/MysqlViewerCheap.pm
 
 lib must be included in @INC.
