@@ -5,7 +5,7 @@ Mojolicious::Plugin::MysqlViewerCheap
 =head1 SYNOPSYS
 
     # Mojolicious::Lite
-    plugin 'mysql_viewer_cheap' dbh => $dbh;
+    plugin 'mysql_viewer_cheap', dbh => $dbh;
 
     # Mojolicious
     $app->plugin('mysql_viewer_cheap', dbh => $dbh);
