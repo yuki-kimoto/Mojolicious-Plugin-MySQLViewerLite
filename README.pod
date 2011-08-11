@@ -17,6 +17,24 @@ Mojolicious::Plugin::MysqlViewerCheap
 
 Plugable mojolicious application to see MySQL database information.
 
+This module have the following features.
+
+=over 4
+
+=item *
+
+You can see all table definition.
+
+=item *
+
+You can specify talbe and select top 1000 rows.
+
+=item *
+
+You can see primary key, null allowed column, and database engine of all tables.
+
+=back
+
 =head1 INSTALL
 
 Mojolicious::Plugin::MysqlViewerCheap need the following module.
