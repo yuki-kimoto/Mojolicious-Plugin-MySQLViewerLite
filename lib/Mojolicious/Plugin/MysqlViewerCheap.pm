@@ -22,7 +22,7 @@ sub register {
     my ($self, $app, $conf) = @_;
     
     my $dbh = $conf->{dbh};
-    my $r = $conf->{route} || $app->route;
+    my $r = $conf->{route} || $app->routes;
     
     $dbi = DBIx::Custom->new;
     $dbi->dbh($dbh);
