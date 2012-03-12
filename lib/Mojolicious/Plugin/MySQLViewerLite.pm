@@ -318,6 +318,13 @@ __DATA__
       padding-top: 2px;
       padding-bottom: 3px;
     }
+    
+    pre {
+      border: 1px solid #9999CC;
+      padding:15px;
+      margin-left:35px;
+      margin-bottom:20px;
+    }
 
   % end
   
@@ -382,35 +389,53 @@ __DATA__
 </ul>
 
 @@ mysqlviewerlite-table.html.ep
-% layout 'mysqlviewerlite', title => "Table $database.$table";
-<h1>Table <%= "$database.$table" %>
+% layout 'mysqlviewerlite', title => "$table in $database";
+<h1>Table <i><%= $table %></i> in <%= $database %></h1>
 <h2>show create table</h2>
 <pre><%= $table_def %></pre>
 
 <h2>Utilities</h2>
 <ul>
 % if ($database eq $current_database) {
-  <li><a href="<%= url_for('/mysqlviewerlite/selecttop1000')->query(database => $database, table => $table) %>">Select top 1000</a></li>
+  <li><a href="<%= url_for('/mysqlviewerlite/selecttop1000')->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
 % }
 </ul>
 
 @@ mysqlviewerlite-listprimarykeys.html.ep
-% layout 'mysqlviewerlite', title => "$database primary keys";
-<h2><%= "$database primary keys" %></h2>
-<ul>
-% for my $table (sort keys %$primary_keys) {
-  <li><a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $table) %>"><%= $table %></a> <%= $primary_keys->{$table} %></li>
-% }
-</ul>
+% layout 'mysqlviewerlite', title => "Primary keys in $database";
+<h2>Primary keys in <i><%= $database %></i></h2>
+<table>
+  % my $tables = [sort keys %$primary_keys];
+  % for (my $i = 0; $i < @$tables; $i += 3) {
+    <tr>
+      % for my $k (0 .. 2) {
+        <td>
+          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a> <%= $primary_keys->{$tables->[$i + $k]} %>
+        </td>
+      % }
+    </tr>
+  % }
+</table>
 
 @@ mysqlviewerlite-listnullallowedcolumns.html.ep
-% layout 'mysqlviewerlite', title => "$database null allowed columns";
-<h2><%= "$database null allowed columns" %></h2>
-<ul>
-% for my $table (sort keys %$null_allowed_columns) {
-  <li><a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $table) %>"><%= $table %></a> (<%= join(',', @{$null_allowed_columns->{$table}}) %>)</li>
-% }
-</ul>
+% layout 'mysqlviewerlite', title => "Null allowed columns in $database";
+<h2>Null allowed columns in <i><%= $database %></i></h2>
+
+<table>
+  % my $tables = [sort keys %$null_allowed_columns];
+  % for (my $i = 0; $i < @$tables; $i += 3) {
+    <tr>
+      % for my $k (0 .. 2) {
+        <td>
+          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>">
+            <%= $tables->[$i + $k] %>
+          </a>
+          (<%= join(', ', @{$null_allowed_columns->{$tables->[$i + $k]} || []}) %>)
+        </td>
+      % }
+    </tr>
+  % }
+</table>
 
 @@ mysqlviewerlite-listdatabaseengines.html.ep
 % layout 'mysqlviewerlite', title => "$database database engines";
@@ -478,7 +503,7 @@ You can see all table definition.
 
 =item *
 
-You can specify talbe and select top 1000 rows.
+You can specify talbe and select 1000 rows.
 
 =item *
 
