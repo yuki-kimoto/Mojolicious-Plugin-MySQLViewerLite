@@ -247,7 +247,12 @@ __DATA__
 <!doctype html><html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
 <head>
-  <title><%= $title %></title>
+  <title>
+    % if (stash 'title') {
+      <%= stash('title') %>
+    % }
+    &ltMySQL Vewer Lite&gt
+  </title>
   %= javascript '/js/jquery.js'
   %= stylesheet begin 
     *, body {
@@ -263,7 +268,7 @@ __DATA__
       font-size: 300%;
       margin-bottom: 20px;
     }
-    
+
     h2 {
       font-size: 230%;
       margin-bottom: 15px;
@@ -288,6 +293,18 @@ __DATA__
     a:hover {
       color: #EE0000;
     }
+    
+    i {
+      border: 1px solid #66AAFF;
+      background-color: #FCFCFF;
+      color: #66CC77;
+      font-size:90%;
+      font-style: normal;
+      padding-left:8px;
+      padding-right:8px;
+      padding-top: 3px;
+      padding-bottom:3px;
+    }
 
   % end
   
@@ -297,9 +314,12 @@ __DATA__
 </body>
 </html>
 
+@@ mysqlviewerlite-header.html.ep
+<h1><a href="<%= '/mysqlviewerlite' %>">&lt;MySQL Viewer Lite&gt;</a></h1>
+
 @@ mysqlviewerlite.html.ep
-% layout 'mysqlviewerlite', title => 'MySQL Viewer Lite';
-<h1>MySQL Viewer Lite</h1>
+% layout 'mysqlviewerlite';
+%= include 'mysqlviewerlite-header';
 
 <h2>Databases</h2>
 <ul>
@@ -312,9 +332,23 @@ __DATA__
 </ul>
 
 @@ mysqlviewerlite-database.html.ep
-% layout 'mysqlviewerlite', title => "Database $database";
-<h1>Database <%= $database %>
-<h2>Tables</h2>
+% layout 'mysqlviewerlite', title => "Tables in $database";
+%= include 'mysqlviewerlite-header';
+
+%= stylesheet begin
+  ul {
+    margin-left: 8px;
+    font-size: 150%;
+    list-style-type: circle;
+  }
+
+  li {
+    margin-bottom: 6px;
+  }
+
+% end
+
+<h2>Tables in <i><%= $database %></i></h2>
 <ul>
 % for my $table (sort @$tables) {
 <li><a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $table) %>"><%= $table %></a></li>
