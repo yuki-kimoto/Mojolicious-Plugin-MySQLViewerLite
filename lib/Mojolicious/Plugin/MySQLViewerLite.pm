@@ -16,51 +16,59 @@ $vc->register_constraint(
 # DBI 
 my $dbi;
 
+# Viewer
+my $viewer = 'mysqlviewerlite';
+
 my %args = (template_class => __PACKAGE__);
 sub register {
   my ($self, $app, $conf) = @_;
   
   my $dbh = $conf->{dbh};
-  my $r = $conf->{route} || $app->routes;
+  my $path = $conf->{path} // 'mysqlviewerlite';
+  my $r = $conf->{route} // $app->routes;
   
-  $dbi = DBIx::Custom->new;
-  $dbi->dbh($dbh);
+  $dbi = DBIx::Custom->new(dbh => $dbh);
   
   # Top page
-  $r->get('/mysqlviewerlite', sub {
+  $r = $r->waypoint("/$path")->via('get')->to(cb => sub {
     my $self = shift;
-    my $stash = $self->stash;
+    my $database = _show_databases();
+    my $current_database = _current_database();
     
-    $stash->{databases} = _show_databases();
-    $stash->{current_database} = _current_database();
-    
-    return $self->render(%args);
+    $self->render(
+      %args,
+      databases => $database,
+      current_database => $current_database
+    );
   });
   
   # Database
-  $r->get('/mysqlviewerlite/database', sub {
+  $r->get('/database' => sub {
     my $self = shift;
     
-    my $param = $self->req->params->to_hash;
+    my $params = _params($self);
     my $rule = [
       database => {default => ''} => [
         'safety_name'
       ] 
     ];
-    my $vresult = $vc->validate($param, $rule);
+    my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
-    
     my $tables = _show_tables($database);
     
-    return $self->render(%args, database => $database, tables => $tables);
-  } => 'mysqlviewerlite-database');
+    return $self->render(
+      %args,
+      database => $database,
+      tables => $tables
+    );
+  } => "$viewer-database");
   
   # Table
-  $r->get('/mysqlviewerlite/table', sub {
+  $r->get('/table', sub {
     my $self = shift;
     
     # Validation
-    my $param = $self->req->params->to_hash;
+    my $params = _params($self);
     my $rule = [
       database => {default => ''} => [
         'safety_name'
@@ -69,27 +77,33 @@ sub register {
         'safety_name'
       ]
     ];
-    my $vresult = $vc->validate($param, $rule);
+    my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
+    my $current_database = _current_database();
     my $table = $vresult->data->{table};
     
     my $table_def = _show_create_table($database, $table);
-    return $self->render(%args, database => $database, table => $table, 
-      table_def => $table_def, current_database => _current_database());
-  } => 'mysqlviewerlite-table');
+    return $self->render(
+      %args,
+      database => $database,
+      table => $table, 
+      table_def => $table_def,
+      current_database => $current_database
+    );
+  } => "$viewer-table");
   
-  # List primary keys
-  $r->get('/mysqlviewerlite/showprimarykeys', sub {
+  # Show primary keys
+  $r->get('/showprimarykeys', sub {
     my $self = shift;
     
     # Validation
-    my $param = $self->req->params->to_hash;
+    my $params = _params($self);
     my $rule = [
       database => {default => ''} => [
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($param, $rule);
+    my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get primary keys
@@ -106,20 +120,20 @@ sub register {
     
     $self->render(%args, database => $database, primary_keys => $primary_keys);
     
-  } => 'mysqlviewerlite-showprimarykeys');
+  } => "$viewer-showprimarykeys");
 
-  # List null allowed columns
-  $r->get('/mysqlviewerlite/shownullallowedcolumns', sub {
+  # Show null allowed columns
+  $r->get('/shownullallowedcolumns', sub {
     my $self = shift;
     
     # Validation
-    my $param = $self->req->params->to_hash;
+    my $params = _params($self);
     my $rule = [
       database => {default => ''} => [
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($param, $rule);
+    my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get null allowed columns
@@ -138,23 +152,26 @@ sub register {
       $null_allowed_columns->{$table} = $null_allowed_column;
     }
     
-    $self->render(%args, database => $database,
-      null_allowed_columns => $null_allowed_columns);
+    $self->render(
+      %args,
+      database => $database,
+      null_allowed_columns => $null_allowed_columns
+    );
     
-  } => 'mysqlviewerlite-shownullallowedcolumns');
+  } =>"$viewer-shownullallowedcolumns");
 
-  # List database engines
-  $r->get('/mysqlviewerlite/showdatabaseengines', sub {
+  # Show database engines
+  $r->get('/showdatabaseengines', sub {
     my $self = shift;
     
     # Validation
-    my $param = $self->req->params->to_hash;
+    my $params = _params($self);
     my $rule = [
       database => {default => ''} => [
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($param, $rule);
+    my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get null allowed columns
@@ -169,17 +186,20 @@ sub register {
         $database_engines->{$table} = $database_engine;
     }
     
-    $self->render(%args, database => $database,
-      database_engines => $database_engines);
+    $self->render(
+      %args,
+      database => $database,
+      database_engines => $database_engines
+    );
     
-  } => 'mysqlviewerlite-showdatabaseengines');
+  } => "$viewer-showdatabaseengines");
 
-  # List database engines
-  $r->get('/mysqlviewerlite/selecttop1000', sub {
+  # Show database engines
+  $r->get('/select', sub {
     my $self = shift;
     
     # Validation
-    my $param = $self->req->params->to_hash;
+    my $params = _params($self);
     my $rule = [
       database => {default => ''} => [
         'safety_name'
@@ -188,7 +208,7 @@ sub register {
         'safety_name'
       ]
     ];
-    my $vresult = $vc->validate($param, $rule);
+    my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
     my $table = $vresult->data->{table};
     
@@ -198,14 +218,18 @@ sub register {
     my $rows = $result->fetch_all;
     my $sql = $dbi->last_sql;
     
-    $self->render(%args, database => $database, table => $table,
-      header => $header, rows => $rows, sql => $sql);
-  } => 'mysqlviewerlite-selecttop1000'); 
+    $self->render(
+      %args,
+      database => $database,
+      table => $table,
+      header => $header,
+      rows => $rows,
+      sql => $sql
+    );
+  } =>"$viewer-select"); 
 }
 
-sub _current_database {
-  $dbi->execute('select database()')->fetch->[0];
-} 
+sub _current_database { $dbi->execute('select database()')->fetch->[0] }
 
 sub _show_databases {
   
@@ -238,6 +262,11 @@ sub _show_create_table {
   return $table_def;
 }
 
+sub _params {
+  my $c = shift;
+  my $params = {map {$_ => $c->param($_)} $c->param};
+  return $params;
+}
 
 1;
 
@@ -398,7 +427,7 @@ __DATA__
 <h2>Query</h2>
 <ul>
 % if ($database eq $current_database) {
-  <li><a href="<%= url_for('/mysqlviewerlite/selecttop1000')->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
+  <li><a href="<%= url_for('/mysqlviewerlite/select')->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
 % }
 </ul>
 
@@ -456,7 +485,7 @@ __DATA__
   % }
 </table>
 
-@@ mysqlviewerlite-selecttop1000.html.ep
+@@ mysqlviewerlite-select.html.ep
 % layout 'mysqlviewerlite', title => "Select * from $table limit 0, 1000";
 
 <h1>select * from <i><%= $table %></i> limit 0, 1000</h1>
@@ -495,8 +524,8 @@ Mojolicious::Plugin::MySQLViewerLite
 
 =head1 DESCRIPTION
 
-Show MySQL database information.
-This is L<Mojolicious> plugin.
+L<Mojolicious::Plugin::MySQLViewerLite> is L<Mojolicious> plugin
+to display MySQL database information on your browser.
 
 L<Mojolicious::Plugin::MySQLViewerLite> have the following features.
 
@@ -504,24 +533,28 @@ L<Mojolicious::Plugin::MySQLViewerLite> have the following features.
 
 =item *
 
-You can see all table definition.
+Display all table names
 
 =item *
 
-You can specify talbe and select 1000 rows.
+Display C<show create table>
 
 =item *
 
-You can see primary key, null allowed column, and database engine of all tables.
+Select * from TABLE limit 0, 1000
+
+=item *
+
+Display C<primary keys>, C<null allowed columnes>, and C<database engines> in all tables.
 
 =back
 
-=head1 INSTALL
+=head1 INSTALLATION
 
-Mojolicious::Plugin::MySQLViewerLite need the following module.
+L<Mojolicious::Plugin::MySQLViewerLite> need the following module.
 
-DBIx::Custom;
-Validator::Custom;
+  DBIx::Custom;
+  Validator::Custom;
 
 And you copy Mojolicious::Plugin::MySQLViewerLite source code
 to the following place.
