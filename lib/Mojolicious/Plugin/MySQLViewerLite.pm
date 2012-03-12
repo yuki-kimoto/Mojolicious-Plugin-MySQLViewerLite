@@ -368,7 +368,7 @@ __DATA__
 
 % end
 
-<h2>Tables in <i><%= $database %></i></h2>
+<h2>Tables in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
   % for (my $i = 0; $i < @$tables; $i += 3) {
     <tr>
@@ -403,9 +403,9 @@ __DATA__
 
 @@ mysqlviewerlite-listprimarykeys.html.ep
 % layout 'mysqlviewerlite', title => "Primary keys in $database";
-<h2>Primary keys in <i><%= $database %></i></h2>
+% my $tables = [sort keys %$primary_keys];
+<h2>Primary keys in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
-  % my $tables = [sort keys %$primary_keys];
   % for (my $i = 0; $i < @$tables; $i += 3) {
     <tr>
       % for my $k (0 .. 2) {
@@ -419,10 +419,9 @@ __DATA__
 
 @@ mysqlviewerlite-listnullallowedcolumns.html.ep
 % layout 'mysqlviewerlite', title => "Null allowed columns in $database";
-<h2>Null allowed columns in <i><%= $database %></i></h2>
-
+% my $tables = [sort keys %$null_allowed_columns];
+<h2>Null allowed columns in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
-  % my $tables = [sort keys %$null_allowed_columns];
   % for (my $i = 0; $i < @$tables; $i += 3) {
     <tr>
       % for my $k (0 .. 2) {
@@ -438,13 +437,23 @@ __DATA__
 </table>
 
 @@ mysqlviewerlite-listdatabaseengines.html.ep
-% layout 'mysqlviewerlite', title => "$database database engines";
-<h2><%= "$database database engines" %></h2>
-<ul>
-% for my $table (sort keys %$database_engines) {
-  <li><a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $table) %>"><%= $table %></a> (<%= $database_engines->{$table} %>)</li>
-% }
-</ul>
+% layout 'mysqlviewerlite', title => "Database engines in $database ";
+% my $tables = [sort keys %$database_engines];
+<h2>Database engines in <i><%= $database %></i> (<%= @$tables %>)</h2>
+<table>
+  % for (my $i = 0; $i < @$tables; $i += 3) {
+    <tr>
+      % for my $k (0 .. 2) {
+        <td>
+          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>">
+            <%= $tables->[$i + $k] %>
+          </a>
+          (<%= $database_engines->{$tables->[$i + $k]} %>)
+        </td>
+      % }
+    </tr>
+  % }
+</table>
 
 @@ mysqlviewerlite-selecttop1000.html.ep
 % layout 'mysqlviewerlite', title => "<%= $table %>: Select top 1000";
