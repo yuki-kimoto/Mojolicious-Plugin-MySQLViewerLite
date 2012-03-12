@@ -5,6 +5,19 @@ use DBIx::Custom;
 use Test::Mojo;
 use Mojo::HelloWorld;
 
+{
+  package Test::Mojo;
+  sub link_ok {
+    my ($self, $url) = @_;
+    
+    my $content = $self->get_ok($url)->tx->res->body;
+    while ($content =~ /<a\s+href\s*=\s*"([^"]+?)"/smg) {
+      my $link = $1;
+      $self->get_ok($link);
+    }
+  }
+}
+
 my $database = $ENV{MOJOLICIOUS_PLUGIN_MYSQLVIEWERLITE_TEST_DATABASE}
   // 'mojomysqlviewer';
 my $dsn = "dbi:mysql:database=$database";
@@ -66,5 +79,14 @@ my $app = Test1->new;
 my $t = Test::Mojo->new($app);
 
 # Top page
-$t->get_ok('/mysqlviewerlite')->content_like(qr/$database/);
+$t->get_ok('/mysqlviewerlite')->content_like(qr/$database\s+\(current\)/);
 
+# Tables page
+$t->get_ok("/mysqlviewerlite/tables?database=$database")
+  ->content_like(qr/table1/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/table3/)
+  ->content_like(qr/Show primary keys/)
+  ->content_like(qr/Show null allowed columns/)
+  ->content_like(qr/Show database engines/);
+$t->link_ok("/mysqlviewerlite/tables?database=$database");

@@ -45,7 +45,7 @@ sub register {
   });
   
   # Database
-  $r->get('/database' => sub {
+  $r->get('/tables' => sub {
     my $self = shift;
     
     my $params = _params($self);
@@ -384,13 +384,13 @@ __DATA__
 <ul>
 % for my $database (sort @$databases) {
 <li>
-  <a href="<%= url_for("/$prefix/database")->query(database => $database) %>"><%= $database %>
+  <a href="<%= url_for("/$prefix/tables")->query(database => $database) %>"><%= $database %>
   %= $current_database eq $database ? '(current)' : ''
 </li>
 % }
 </ul>
 
-@@ database.html.ep
+@@ tables.html.ep
 % layout 'common', title => "Tables in $database";
 
 %= stylesheet begin
