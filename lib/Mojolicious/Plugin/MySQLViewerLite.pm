@@ -1,3 +1,4 @@
+use 5.001001;
 package Mojolicious::Plugin::MySQLViewerLite;
 use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
