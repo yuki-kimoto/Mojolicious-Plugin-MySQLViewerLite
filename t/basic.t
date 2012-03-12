@@ -5,8 +5,9 @@ use DBIx::Custom;
 use Test::Mojo;
 use Mojo::HelloWorld;
 
-my $dsn = $ENV{MOJOLICIOUS_PLUGIN_MYSQLVIEWERLITE_TEST_DSN}
-  // 'dbi:mysql:database=mojomysqlviewer';
+my $database = $ENV{MOJOLICIOUS_PLUGIN_MYSQLVIEWERLITE_TEST_DATABASE}
+  // 'mojomysqlviewer';
+my $dsn = "dbi:mysql:database=$database";
 my $user = $ENV{MOJOLICIOUS_PLUGIN_MYSQLVIEWERLITE_TEST_USER}
   // 'mojomysqlviewer';
 my $password = $ENV{MOJOLICIOUS_PLUGIN_MYSQLVIEWERLITE_TEST_PASSWORD}
@@ -26,13 +27,14 @@ plan skip_all => 'MySQL private test' if $@;
 plan 'no_plan';
 
 # Prepare
-my $app = Mojo::HelloWorld->new;
-$app->plugin('MySQLViewerLite', dbh => $dbi->dbh);
+{
+    package Test1;
+    use Mojolicious::Lite;
+    plugin 'MySQLViewerLite', dbh => $dbi->dbh;
+}
+my $app = Test1->new;
 my $t = Test::Mojo->new($app);
 
 # Top page
-$t->get_ok('/mysqlviewerlite');
-
-
-
+$t->get_ok('/mysqlviewerlite')->content_like(qr/$database/);
 
