@@ -3,6 +3,8 @@ use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
 use Validator::Custom;
 
+our $VERSION = '0.01';
+
 # Validator
 my $vc = Validator::Custom->new;
 $vc->register_constraint(
@@ -514,7 +516,7 @@ __END__
 
 =head1 NAME
 
-Mojolicious::Plugin::MySQLViewerLite
+Mojolicious::Plugin::MySQLViewerLite - Mojolicious plugin to display mysql database information
 
 =head1 SYNOPSYS
 
