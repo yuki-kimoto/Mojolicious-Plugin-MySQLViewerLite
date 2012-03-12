@@ -1,23 +1,24 @@
 =head1 NAME
 
-Mojolicious::Plugin::MysqlViewerCheap
+Mojolicious::Plugin::MySQLViewerLite
 
 =head1 SYNOPSYS
 
     # Mojolicious::Lite
-    plugin 'mysql_viewer_cheap', dbh => $dbh;
+    plugin 'MySQLViewerLite', dbh => $dbh;
 
     # Mojolicious
-    $app->plugin('mysql_viewer_cheap', dbh => $dbh);
+    $app->plugin('MySQLViewerLite', dbh => $dbh);
 
     # Access
-    http://localhost:3000/mysqlviewer
+    http://localhost:3000/mysqlviewerlite
 
 =head1 DESCRIPTION
 
-Plugable mojolicious application to see MySQL database information.
+Show MySQL database information.
+This is L<Mojolicious> plugin.
 
-This module have the following features.
+L<Mojolicious::Plugin::MySQLViewerLite> have the following features.
 
 =over 4
 
@@ -37,20 +38,12 @@ You can see primary key, null allowed column, and database engine of all tables.
 
 =head1 INSTALL
 
-Mojolicious::Plugin::MysqlViewerCheap need the following module.
+Mojolicious::Plugin::MySQLViewerLite need the following module.
 
-    cpan DBIx::Custom;
-    cpan Validator::Custom;
+  DBIx::Custom;
+  Validator::Custom;
 
-And you copy Mojolicious::Plugin::MysqlViewerCheap source code
+And you copy Mojolicious::Plugin::MySQLViewerLite source code
 to the following place.
 
-    lib/Mojolicious/Plugin/MysqlViewerCheap.pm
-
-lib must be included in @INC.
-
-=head1 CAUTION
-
-I want a perl tool like phpMyAdmin. but I don't have the time to create it.
-so this tool is not so good to use.
-but i think this is good example of Mojolicious plugin.
+    lib/Mojolicious/Plugin/MySQLViewerLite.pm
