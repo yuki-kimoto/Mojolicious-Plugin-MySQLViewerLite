@@ -17,12 +17,9 @@ $vc->register_constraint(
 my $dbi;
 
 # Viewer
-my $viewer = 'mysqlviewerlite';
-
 my %args = (template_class => __PACKAGE__);
 sub register {
   my ($self, $app, $conf) = @_;
-  
   my $dbh = $conf->{dbh};
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
   $args{prefix} = $prefix;
@@ -37,11 +34,12 @@ sub register {
     my $current_database = _current_database();
     
     $self->render(
+      'index',
       %args,
       databases => $database,
       current_database => $current_database
     );
-  })->name("$viewer");
+  });
   
   # Database
   $r->get('/database' => sub {
@@ -62,7 +60,7 @@ sub register {
       database => $database,
       tables => $tables
     );
-  } => "$viewer-database");
+  });
   
   # Table
   $r->get('/table', sub {
@@ -91,7 +89,7 @@ sub register {
       table_def => $table_def,
       current_database => $current_database
     );
-  } => "$viewer-table");
+  });
   
   # Show primary keys
   $r->get('/showprimarykeys', sub {
@@ -121,7 +119,7 @@ sub register {
     
     $self->render(%args, database => $database, primary_keys => $primary_keys);
     
-  } => "$viewer-showprimarykeys");
+  });
 
   # Show null allowed columns
   $r->get('/shownullallowedcolumns', sub {
@@ -159,7 +157,7 @@ sub register {
       null_allowed_columns => $null_allowed_columns
     );
     
-  } =>"$viewer-shownullallowedcolumns");
+  });
 
   # Show database engines
   $r->get('/showdatabaseengines', sub {
@@ -193,7 +191,7 @@ sub register {
       database_engines => $database_engines
     );
     
-  } => "$viewer-showdatabaseengines");
+  });
 
   # Show database engines
   $r->get('/select', sub {
@@ -227,7 +225,7 @@ sub register {
       rows => $rows,
       sql => $sql
     );
-  } =>"$viewer-select"); 
+  }); 
 }
 
 sub _current_database { $dbi->execute('select database()')->fetch->[0] }
@@ -273,7 +271,7 @@ sub _params {
 
 __DATA__
 
-@@ layouts/mysqlviewerlite.html.ep
+@@ layouts/common.html.ep
 <!doctype html><html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
 <head>
@@ -281,7 +279,7 @@ __DATA__
     % if (stash 'title') {
       <%= stash('title') %>
     % }
-    &ltMySQL Vewer Lite&gt
+    MySQL Vewer Lite
   </title>
   %= javascript '/js/jquery.js'
   %= stylesheet begin 
@@ -290,19 +288,32 @@ __DATA__
       margin: 0;
     }
     
-    body {
-      padding: 60px;
+    #container {
+      padding-top: 15px;
+      padding-bottom: 15px;
+      padding-left: 15px;
+      padding-right: 15px;
     }
     
     h1 {
-      font-size: 300%;
-      margin-bottom: 20px;
+      text-align: center;
+      font-size: 250%;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      padding-left: 40px;
+      background-color: #F9F9FF
     }
 
     h2 {
       font-size: 230%;
       margin-bottom: 15px;
       margin-left: 10px;
+    }
+
+    h3 {
+      font-size: 200%;
+      margin-bottom: 15px;
+      margin-left: 30px;
     }
     
     ul {
@@ -325,15 +336,9 @@ __DATA__
     }
     
     i {
-      border: 1px solid #66AAFF;
-      background-color: #FCFCFF;
       color: #66CC77;
-      font-size:90%;
       font-style: normal;
-      padding-left:8px;
-      padding-right:8px;
-      padding-top: 3px;
-      padding-bottom:3px;
+      font-size: 95%;
     }
     
     table {
@@ -361,16 +366,16 @@ __DATA__
   
 </head>
 <body>
-  %= content;
+  <h1><a href="<%= "/$prefix" %>">MySQL Viewer Lite</a></h1>
+  <hr>
+  <div id="container">
+    %= content;
+  </div>
 </body>
 </html>
 
-@@ mysqlviewerlite-header.html.ep
-<h1><a href="<%= "/$prefix" %>">&lt;MySQL Viewer Lite&gt;</a></h1>
-
-@@ mysqlviewerlite.html.ep
-% layout 'mysqlviewerlite';
-%= include 'mysqlviewerlite-header';
+@@ index.html.ep
+% layout 'common';
 
 <h2>Databases</h2>
 <ul>
@@ -382,9 +387,8 @@ __DATA__
 % }
 </ul>
 
-@@ mysqlviewerlite-database.html.ep
-% layout 'mysqlviewerlite', title => "Tables in $database";
-%= include 'mysqlviewerlite-header';
+@@ database.html.ep
+% layout 'common', title => "Tables in $database";
 
 %= stylesheet begin
   ul {
@@ -419,21 +423,21 @@ __DATA__
 <li><a href="<%= url_for("/$prefix/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
 </ul>
 
-@@ mysqlviewerlite-table.html.ep
-% layout 'mysqlviewerlite', title => "$table in $database";
-<h1>Table <i><%= $table %></i> in <%= $database %></h1>
-<h2>show create table</h2>
+@@ table.html.ep
+% layout 'common', title => "$table in $database";
+<h2>Table <i><%= $table %></i> in <%= $database %></h2>
+<h3>show create table</h3>
 <pre><%= $table_def %></pre>
 
-<h2>Query</h2>
+<h3>Query</h3>
 <ul>
 % if ($database eq $current_database) {
   <li><a href="<%= url_for("/$prefix/select")->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
 % }
 </ul>
 
-@@ mysqlviewerlite-showprimarykeys.html.ep
-% layout 'mysqlviewerlite', title => "Primary keys in $database";
+@@ showprimarykeys.html.ep
+% layout 'common', title => "Primary keys in $database";
 % my $tables = [sort keys %$primary_keys];
 <h2>Primary keys in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
@@ -448,8 +452,8 @@ __DATA__
   % }
 </table>
 
-@@ mysqlviewerlite-shownullallowedcolumns.html.ep
-% layout 'mysqlviewerlite', title => "Null allowed columns in $database";
+@@ shownullallowedcolumns.html.ep
+% layout 'common', title => "Null allowed columns in $database";
 % my $tables = [sort keys %$null_allowed_columns];
 <h2>Null allowed columns in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
@@ -467,8 +471,8 @@ __DATA__
   % }
 </table>
 
-@@ mysqlviewerlite-showdatabaseengines.html.ep
-% layout 'mysqlviewerlite', title => "Database engines in $database ";
+@@ showdatabaseengines.html.ep
+% layout 'common', title => "Database engines in $database ";
 % my $tables = [sort keys %$database_engines];
 <h2>Database engines in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
@@ -486,10 +490,10 @@ __DATA__
   % }
 </table>
 
-@@ mysqlviewerlite-select.html.ep
-% layout 'mysqlviewerlite', title => "Select * from $table limit 0, 1000";
+@@ select.html.ep
+% layout 'common', title => "Select * from $table limit 0, 1000";
 
-<h1>select * from <i><%= $table %></i> limit 0, 1000</h1>
+<h2>select * from <i><%= $table %></i> limit 0, 1000</h2>
 
 <table>
 <tr>
