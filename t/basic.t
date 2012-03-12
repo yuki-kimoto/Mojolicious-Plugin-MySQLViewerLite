@@ -90,3 +90,125 @@ $t->get_ok("/mysqlviewerlite/tables?database=$database")
   ->content_like(qr/Show null allowed columns/)
   ->content_like(qr/Show database engines/);
 $t->link_ok("/mysqlviewerlite/tables?database=$database");
+
+# Table page
+$t->get_ok("/mysqlviewerlite/table?database=$database&table=table1")
+  ->content_like(qr/show create table/)
+  ->content_like(qr/column1_1/)
+  ->content_like(qr/column1_2/);
+$t->link_ok("/mysqlviewerlite/table?database=$database&table=table1");
+
+# Select page
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table1")
+  ->content_like(qr#\Qselect * from <i>table1</i> limit 0, 1000#)
+  ->content_like(qr/column1_1/)
+  ->content_like(qr/column1_2/)
+  ->content_like(qr/1/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/);
+
+# Primary keys page
+$t->get_ok("/mysqlviewerlite/showprimarykeys?database=$database")
+  ->content_like(qr/Primary keys/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(`column1_1`)/)
+  ->content_unlike(qr/\Q(`column1_2`)/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/table3/);
+
+# Null allowed column page
+$t->get_ok("/mysqlviewerlite/shownullallowedcolumns?database=$database")
+  ->content_like(qr/Null allowed column/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(`column1_2`)/)
+  ->content_like(qr/table2/)
+  ->content_unlike(qr/\Q(`column2_1`)/)
+  ->content_unlike(qr/\Q(`column2_2`)/)
+  ->content_like(qr/table3/);
+
+# Database engines page
+$t->get_ok("/mysqlviewerlite/showdatabaseengines?database=$database")
+  ->content_like(qr/Database engines/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(MyISAM)/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/\Q(InnoDB)/)
+  ->content_like(qr/table3/);
+
+# Other route and prefix
+# Test2.pm
+my $route_test;
+{
+    package Test2;
+    use Mojolicious::Lite;
+    my $r = app->routes;
+    my $b = $r->under(sub {
+      $route_test = 1;
+      return 1;
+    });
+    plugin 'MySQLViewerLite', dbh => $dbi->dbh, route => $b, prefix => 'other';
+}
+$app = Test2->new;
+$t = Test::Mojo->new($app);
+
+# Top page
+$t->get_ok('/other')->content_like(qr/$database\s+\(current\)/);
+is($route_test, 1);
+
+# Tables page
+$t->get_ok("/other/tables?database=$database")
+  ->content_like(qr/table1/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/table3/)
+  ->content_like(qr/Show primary keys/)
+  ->content_like(qr/Show null allowed columns/)
+  ->content_like(qr/Show database engines/);
+$t->link_ok("/other/tables?database=$database");
+
+# Table page
+$t->get_ok("/other/table?database=$database&table=table1")
+  ->content_like(qr/show create table/)
+  ->content_like(qr/column1_1/)
+  ->content_like(qr/column1_2/);
+$t->link_ok("/other/table?database=$database&table=table1");
+
+# Select page
+$t->get_ok("/other/select?database=$database&table=table1")
+  ->content_like(qr#\Qselect * from <i>table1</i> limit 0, 1000#)
+  ->content_like(qr/column1_1/)
+  ->content_like(qr/column1_2/)
+  ->content_like(qr/1/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/);
+
+# Primary keys page
+$t->get_ok("/other/showprimarykeys?database=$database")
+  ->content_like(qr/Primary keys/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(`column1_1`)/)
+  ->content_unlike(qr/\Q(`column1_2`)/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/table3/);
+
+# Null allowed column page
+$t->get_ok("/other/shownullallowedcolumns?database=$database")
+  ->content_like(qr/Null allowed column/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(`column1_2`)/)
+  ->content_like(qr/table2/)
+  ->content_unlike(qr/\Q(`column2_1`)/)
+  ->content_unlike(qr/\Q(`column2_2`)/)
+  ->content_like(qr/table3/);
+
+# Database engines page
+$t->get_ok("/other/showdatabaseengines?database=$database")
+  ->content_like(qr/Database engines/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(MyISAM)/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/\Q(InnoDB)/)
+  ->content_like(qr/table3/);
+
+
