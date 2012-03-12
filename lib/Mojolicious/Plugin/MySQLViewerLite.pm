@@ -79,7 +79,7 @@ sub register {
   } => 'mysqlviewerlite-table');
   
   # List primary keys
-  $r->get('/mysqlviewerlite/listprimarykeys', sub {
+  $r->get('/mysqlviewerlite/showprimarykeys', sub {
     my $self = shift;
     
     # Validation
@@ -106,10 +106,10 @@ sub register {
     
     $self->render(%args, database => $database, primary_keys => $primary_keys);
     
-  } => 'mysqlviewerlite-listprimarykeys');
+  } => 'mysqlviewerlite-showprimarykeys');
 
   # List null allowed columns
-  $r->get('/mysqlviewerlite/listnullallowedcolumns', sub {
+  $r->get('/mysqlviewerlite/shownullallowedcolumns', sub {
     my $self = shift;
     
     # Validation
@@ -141,10 +141,10 @@ sub register {
     $self->render(%args, database => $database,
       null_allowed_columns => $null_allowed_columns);
     
-  } => 'mysqlviewerlite-listnullallowedcolumns');
+  } => 'mysqlviewerlite-shownullallowedcolumns');
 
   # List database engines
-  $r->get('/mysqlviewerlite/listdatabaseengines', sub {
+  $r->get('/mysqlviewerlite/showdatabaseengines', sub {
     my $self = shift;
     
     # Validation
@@ -172,7 +172,7 @@ sub register {
     $self->render(%args, database => $database,
       database_engines => $database_engines);
     
-  } => 'mysqlviewerlite-listdatabaseengines');
+  } => 'mysqlviewerlite-showdatabaseengines');
 
   # List database engines
   $r->get('/mysqlviewerlite/selecttop1000', sub {
@@ -312,9 +312,10 @@ __DATA__
       margin-bottom:20px;
     }
     
-    table, td {
+    table, td, th {
       border: 1px solid #9999CC;
       padding-left:7px;
+      padding-right:7px;
       padding-top: 2px;
       padding-bottom: 3px;
     }
@@ -381,11 +382,11 @@ __DATA__
   % }
 </table>
 
-<h2>Utility</h2>
+<h2>Utilities</h2>
 <ul>
-<li><a href="<%= url_for('/mysqlviewerlite/listprimarykeys')->query(database => $database) %>">List primary keys</a></li>
-<li><a href="<%= url_for('/mysqlviewerlite/listnullallowedcolumns')->query(database => $database) %>">List null allowed columns</a></li>
-<li><a href="<%= url_for('/mysqlviewerlite/listdatabaseengines')->query(database => $database) %>">List database engines</a></li>
+<li><a href="<%= url_for('/mysqlviewerlite/showprimarykeys')->query(database => $database) %>">Show primary keys</a></li>
+<li><a href="<%= url_for('/mysqlviewerlite/shownullallowedcolumns')->query(database => $database) %>">Show null allowed columns</a></li>
+<li><a href="<%= url_for('/mysqlviewerlite/showdatabaseengines')->query(database => $database) %>">Show database engines</a></li>
 </ul>
 
 @@ mysqlviewerlite-table.html.ep
@@ -394,14 +395,14 @@ __DATA__
 <h2>show create table</h2>
 <pre><%= $table_def %></pre>
 
-<h2>Utilities</h2>
+<h2>Query</h2>
 <ul>
 % if ($database eq $current_database) {
   <li><a href="<%= url_for('/mysqlviewerlite/selecttop1000')->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
 % }
 </ul>
 
-@@ mysqlviewerlite-listprimarykeys.html.ep
+@@ mysqlviewerlite-showprimarykeys.html.ep
 % layout 'mysqlviewerlite', title => "Primary keys in $database";
 % my $tables = [sort keys %$primary_keys];
 <h2>Primary keys in <i><%= $database %></i> (<%= @$tables %>)</h2>
@@ -417,7 +418,7 @@ __DATA__
   % }
 </table>
 
-@@ mysqlviewerlite-listnullallowedcolumns.html.ep
+@@ mysqlviewerlite-shownullallowedcolumns.html.ep
 % layout 'mysqlviewerlite', title => "Null allowed columns in $database";
 % my $tables = [sort keys %$null_allowed_columns];
 <h2>Null allowed columns in <i><%= $database %></i> (<%= @$tables %>)</h2>
@@ -436,7 +437,7 @@ __DATA__
   % }
 </table>
 
-@@ mysqlviewerlite-listdatabaseengines.html.ep
+@@ mysqlviewerlite-showdatabaseengines.html.ep
 % layout 'mysqlviewerlite', title => "Database engines in $database ";
 % my $tables = [sort keys %$database_engines];
 <h2>Database engines in <i><%= $database %></i> (<%= @$tables %>)</h2>
@@ -456,18 +457,11 @@ __DATA__
 </table>
 
 @@ mysqlviewerlite-selecttop1000.html.ep
-% layout 'mysqlviewerlite', title => "<%= $table %>: Select top 1000";
+% layout 'mysqlviewerlite', title => "Select * from $table limit 0, 1000";
 
-<h1>Select top 1000</h1>
+<h1>select * from <i><%= $table %></i> limit 0, 1000</h1>
 
-<table border="1" cellspacing="0" >
-<tr><td>Table name</td><td><%= $table %></td></tr>
-<tr><td>SQL</td><td><%= $sql %></td></tr>
-</table>
-
-<br>
-
-<table border="1" cellspacing="0" >
+<table>
 <tr>
   % for my $h (@$header) {
       <th><%= $h %></th>
@@ -481,6 +475,8 @@ __DATA__
   </tr>
 % }
 </table>
+
+__END__
 
 =head1 NAME
 
