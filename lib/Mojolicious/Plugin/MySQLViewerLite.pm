@@ -557,14 +557,18 @@ Display C<primary keys>, C<null allowed columnes>, and C<database engines> in al
 
 =back
 
-=head1 INSTALLATION
+=head1 OPTIONS
 
-L<Mojolicious::Plugin::MySQLViewerLite> need the following module.
+=head2 C<dbh>
 
-  DBIx::Custom;
-  Validator::Custom;
+  dbh => $dbh
 
-And you copy Mojolicious::Plugin::MySQLViewerLite source code
-to the following place.
+Database handle object in L<DBI>.
 
-  lib/Mojolicious/Plugin/MySQLViewerLite.pm
+=head2 C<prefix>
+
+  prefix => 'mysqlviewerlite2'
+
+Application base path, default to C<mysqlviewerlite>.
+
+=cut
