@@ -305,6 +305,19 @@ __DATA__
       padding-top: 3px;
       padding-bottom:3px;
     }
+    
+    table {
+      border-collapse: collapse;
+      margin-left:35px;
+      margin-bottom:20px;
+    }
+    
+    table, td {
+      border: 1px solid #9999CC;
+      padding-left:7px;
+      padding-top: 2px;
+      padding-bottom: 3px;
+    }
 
   % end
   
@@ -349,11 +362,17 @@ __DATA__
 % end
 
 <h2>Tables in <i><%= $database %></i></h2>
-<ul>
-% for my $table (sort @$tables) {
-<li><a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $table) %>"><%= $table %></a></li>
-% }
-</ul>
+<table>
+  % for (my $i = 0; $i < @$tables; $i += 3) {
+    <tr>
+      % for my $k (0 .. 2) {
+        <td>
+          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a></li>
+        </td>
+      % }
+    </tr>
+  % }
+</table>
 
 <h2>Utility</h2>
 <ul>
