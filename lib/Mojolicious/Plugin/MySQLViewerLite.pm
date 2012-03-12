@@ -24,13 +24,14 @@ sub register {
   my ($self, $app, $conf) = @_;
   
   my $dbh = $conf->{dbh};
-  my $path = $conf->{path} // 'mysqlviewerlite';
+  my $base_path = $conf->{path} // 'mysqlviewerlite';
+  $args{base_path} = $base_path;
   my $r = $conf->{route} // $app->routes;
   
   $dbi = DBIx::Custom->new(dbh => $dbh);
   
   # Top page
-  $r = $r->waypoint("/$path")->via('get')->to(cb => sub {
+  $r = $r->waypoint("/$base_path")->via('get')->to(cb => sub {
     my $self = shift;
     my $database = _show_databases();
     my $current_database = _current_database();
@@ -40,7 +41,7 @@ sub register {
       databases => $database,
       current_database => $current_database
     );
-  });
+  })->name("$viewer");
   
   # Database
   $r->get('/database' => sub {
@@ -365,7 +366,7 @@ __DATA__
 </html>
 
 @@ mysqlviewerlite-header.html.ep
-<h1><a href="<%= '/mysqlviewerlite' %>">&lt;MySQL Viewer Lite&gt;</a></h1>
+<h1><a href="<%= "/$base_path" %>">&lt;MySQL Viewer Lite&gt;</a></h1>
 
 @@ mysqlviewerlite.html.ep
 % layout 'mysqlviewerlite';
@@ -375,7 +376,7 @@ __DATA__
 <ul>
 % for my $database (sort @$databases) {
 <li>
-  <a href="<%= url_for('/mysqlviewerlite/database')->query(database => $database) %>"><%= $database %>
+  <a href="<%= url_for("/$base_path/database")->query(database => $database) %>"><%= $database %>
   %= $current_database eq $database ? '(current)' : ''
 </li>
 % }
@@ -404,7 +405,7 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a></li>
+          <a href="<%= url_for("/$base_path/table")->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a></li>
         </td>
       % }
     </tr>
@@ -413,9 +414,9 @@ __DATA__
 
 <h2>Utilities</h2>
 <ul>
-<li><a href="<%= url_for('/mysqlviewerlite/showprimarykeys')->query(database => $database) %>">Show primary keys</a></li>
-<li><a href="<%= url_for('/mysqlviewerlite/shownullallowedcolumns')->query(database => $database) %>">Show null allowed columns</a></li>
-<li><a href="<%= url_for('/mysqlviewerlite/showdatabaseengines')->query(database => $database) %>">Show database engines</a></li>
+<li><a href="<%= url_for("/$base_path/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
+<li><a href="<%= url_for("/$base_path/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
+<li><a href="<%= url_for("/$base_path/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
 </ul>
 
 @@ mysqlviewerlite-table.html.ep
@@ -427,7 +428,7 @@ __DATA__
 <h2>Query</h2>
 <ul>
 % if ($database eq $current_database) {
-  <li><a href="<%= url_for('/mysqlviewerlite/select')->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
+  <li><a href="<%= url_for("/$base_path/select")->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
 % }
 </ul>
 
@@ -440,7 +441,7 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a> <%= $primary_keys->{$tables->[$i + $k]} %>
+          <a href="<%= url_for("/$base_path/table")->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a> <%= $primary_keys->{$tables->[$i + $k]} %>
         </td>
       % }
     </tr>
@@ -456,7 +457,7 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>">
+          <a href="<%= url_for("/$base_path/table")->query(database => $database, table => $tables->[$i + $k]) %>">
             <%= $tables->[$i + $k] %>
           </a>
           (<%= join(', ', @{$null_allowed_columns->{$tables->[$i + $k]} || []}) %>)
@@ -475,7 +476,7 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for('/mysqlviewerlite/table')->query(database => $database, table => $tables->[$i + $k]) %>">
+          <a href="<%= url_for("/$base_path/table")->query(database => $database, table => $tables->[$i + $k]) %>">
             <%= $tables->[$i + $k] %>
           </a>
           (<%= $database_engines->{$tables->[$i + $k]} %>)
