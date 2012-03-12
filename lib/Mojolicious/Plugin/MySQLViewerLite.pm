@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
 use Validator::Custom;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # Validator
 my $vc = Validator::Custom->new;
