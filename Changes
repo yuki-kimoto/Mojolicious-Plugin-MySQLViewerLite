@@ -1,3 +1,9 @@
+0.04
+  - improved design, removed primary key last commma.
+  - display charsets in all talbes.
+  - suppress warnings
+0.03
+  - move README.pod to README.
 0.02
   - added more tests.
 0.01

@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
 use Validator::Custom;
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 # Validator
 my $vc = Validator::Custom->new;
@@ -116,12 +116,16 @@ sub register {
       my $primary_key = '';
       if ($show_create_table =~ /PRIMARY\s+KEY\s+(.+?)\n/i) {
         $primary_key = $1;
+        $primary_key =~ s/,$//;
       }
       $primary_keys->{$table} = $primary_key;
     }
     
-    $self->render(%args, database => $database, primary_keys => $primary_keys);
-    
+    $self->render(
+      %args,
+      database => $database,
+      primary_keys => $primary_keys
+    );
   });
 
   # Show null allowed columns
@@ -159,7 +163,6 @@ sub register {
       database => $database,
       null_allowed_columns => $null_allowed_columns
     );
-    
   });
 
   # Show database engines
@@ -180,12 +183,12 @@ sub register {
     my $tables = _show_tables($database);
     my $database_engines = {};
     for my $table (@$tables) {
-        my $show_create_table = _show_create_table($database, $table) || '';
-        my $database_engine = '';
-        if ($show_create_table =~ /ENGINE=(.+?)\s+/i) {
-          $database_engine = $1;
-        }
-        $database_engines->{$table} = $database_engine;
+      my $show_create_table = _show_create_table($database, $table) || '';
+      my $database_engine = '';
+      if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
+        $database_engine = $1;
+      }
+      $database_engines->{$table} = $database_engine;
     }
     
     $self->render(
@@ -193,10 +196,42 @@ sub register {
       database => $database,
       database_engines => $database_engines
     );
-    
   });
 
-  # Show database engines
+  # Show charsets
+  $r->get('/showcharsets', sub {
+    my $self = shift;
+    
+    # Validation
+    my $params = _params($self);
+    my $rule = [
+      database => {default => ''} => [
+        'safety_name'
+      ],
+    ];
+    my $vresult = $vc->validate($params, $rule);
+    my $database = $vresult->data->{database};
+    
+    # Get charsets
+    my $tables = _show_tables($database);
+    my $charsets = {};
+    for my $table (@$tables) {
+      my $show_create_table = _show_create_table($database, $table) || '';
+      my $charset = '';
+      if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
+        $charset = $1;
+      }
+      $charsets->{$table} = $charset;
+    }
+    
+    $self->render(
+      %args,
+      database => $database,
+      charsets => $charsets
+    );
+  });
+  
+  # Select
   $r->get('/select', sub {
     my $self = shift;
     
@@ -421,9 +456,10 @@ __DATA__
 
 <h2>Utilities</h2>
 <ul>
-<li><a href="<%= url_for("/$prefix/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
-<li><a href="<%= url_for("/$prefix/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
-<li><a href="<%= url_for("/$prefix/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
+  <li><a href="<%= url_for("/$prefix/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
+  <li><a href="<%= url_for("/$prefix/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
+  <li><a href="<%= url_for("/$prefix/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
+  <li><a href="<%= url_for("/$prefix/showcharsets")->query(database => $database) %>">Show charsets</a></li>
 </ul>
 
 @@ table.html.ep
@@ -448,7 +484,13 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a> <%= $primary_keys->{$tables->[$i + $k]} %>
+          % my $table = $tables->[$i + $k];
+          % if (defined $table) {
+            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
+              <%= $table %>
+            </a>
+            <%= $primary_keys->{$table} %>
+          % }
         </td>
       % }
     </tr>
@@ -464,10 +506,13 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>">
-            <%= $tables->[$i + $k] %>
-          </a>
-          (<%= join(', ', @{$null_allowed_columns->{$tables->[$i + $k]} || []}) %>)
+          % my $table = $tables->[$i + $k];
+          % if (defined $table) {
+            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
+              <%= $table %>
+            </a>
+            (<%= join(', ', @{$null_allowed_columns->{$table} || []}) %>)
+          % }
         </td>
       % }
     </tr>
@@ -483,10 +528,35 @@ __DATA__
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>">
-            <%= $tables->[$i + $k] %>
-          </a>
-          (<%= $database_engines->{$tables->[$i + $k]} %>)
+          % my $table = $tables->[$i + $k];
+          % if (defined $table) {
+            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
+              <%= $table %>
+            </a>
+            (<%= $database_engines->{$table} %>)
+          % }
+        </td>
+      % }
+    </tr>
+  % }
+</table>
+
+@@ showcharsets.html.ep
+% layout 'common', title => "Charsets in $database ";
+% my $tables = [sort keys %$charsets];
+<h2>Charsets in <i><%= $database %></i> (<%= @$tables %>)</h2>
+<table>
+  % for (my $i = 0; $i < @$tables; $i += 3) {
+    <tr>
+      % for my $k (0 .. 2) {
+        <td>
+          % my $table = $tables->[$i + $k];
+          % if (defined $table) {
+            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
+              <%= $table %>
+            </a>
+            (<%= $charsets->{$table} %>)
+          % }
         </td>
       % }
     </tr>
@@ -556,7 +626,7 @@ Select * from TABLE limit 0, 1000
 
 =item *
 
-Display C<primary keys>, C<null allowed columnes>, and C<database engines> in all tables.
+Display C<primary keys>, C<null allowed columnes>, C<database engines> and C<charsets> in all tables.
 
 =back
 
