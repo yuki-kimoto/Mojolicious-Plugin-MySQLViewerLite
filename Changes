@@ -1,3 +1,5 @@
+0.06
+  - added show create tables page
 0.05
   - fixed bug that 'select * from TABLE' is not displayed
     if database is not current database

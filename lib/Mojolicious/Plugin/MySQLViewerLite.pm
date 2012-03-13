@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
 use Validator::Custom;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 # Validator
 my $vc = Validator::Custom->new;
@@ -89,6 +89,34 @@ sub register {
       database => $database,
       table => $table, 
       table_def => $table_def,
+    );
+  });
+
+  # Show create tables
+  $r->get('/showcreatetables', sub {
+    my $self = shift;
+    
+    # Validation
+    my $params = _params($self);
+    my $rule = [
+      database => {default => ''} => [
+        'safety_name'
+      ]
+    ];
+    my $vresult = $vc->validate($params, $rule);
+    my $database = $vresult->data->{database};
+    my $tables = _show_tables($database);
+    
+    # Get create tables
+    my $create_tables = {};
+    for my $table (@$tables) {
+      $create_tables->{$table} = _show_create_table($database, $table);
+    }
+    
+    return $self->render(
+      %args,
+      database => $database,
+      create_tables => $create_tables
     );
   });
   
@@ -454,6 +482,7 @@ __DATA__
 
 <h2>Utilities</h2>
 <ul>
+  <li><a href="<%= url_for("/$prefix/showcreatetables")->query(database => $database) %>">Show create tables</a></li>
   <li><a href="<%= url_for("/$prefix/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
   <li><a href="<%= url_for("/$prefix/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
   <li><a href="<%= url_for("/$prefix/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
@@ -470,6 +499,16 @@ __DATA__
 <ul>
   <li><a href="<%= url_for("/$prefix/select")->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
 </ul>
+
+@@ showcreatetables.html.ep
+% layout 'common', title => "Create tables in $database ";
+% my $tables = [sort keys %$create_tables];
+<h2>Create tables in <i><%= $database %></i></h2>
+% for my $table (@$tables) {
+  <pre>
+    <%= $create_tables->{$table} =%>
+  </pre>
+% }
 
 @@ showprimarykeys.html.ep
 % layout 'common', title => "Primary keys in $database";

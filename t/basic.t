@@ -108,6 +108,17 @@ $t->get_ok("/mysqlviewerlite/select?database=$database&table=table1")
   ->content_like(qr/3/)
   ->content_like(qr/4/);
 
+# Show create tables page
+$t->get_ok("/mysqlviewerlite/showcreatetables?database=$database")
+  ->content_like(qr/Create tables/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/column1_1/)
+  ->content_like(qr/column1_2/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/column2_1/)
+  ->content_like(qr/column2_2/)
+  ->content_like(qr/table3/);
+
 # Show Primary keys page
 $t->get_ok("/mysqlviewerlite/showprimarykeys?database=$database")
   ->content_like(qr/Primary keys/)
