@@ -49,14 +49,14 @@ create table table1 (
   column1_1 int,
   column1_2 int,
   primary key (column1_1)
-) engine=MyIsam;
+) engine=MyIsam charset=ujis;
 EOS
 
 $dbi->execute(<<'EOS');
 create table table2 (
   column2_1 int not null,
   column2_2 int not null
-) engine=InnoDB;
+) engine=InnoDB charset=utf8;
 EOS
 
 $dbi->execute(<<'EOS');
@@ -108,7 +108,7 @@ $t->get_ok("/mysqlviewerlite/select?database=$database&table=table1")
   ->content_like(qr/3/)
   ->content_like(qr/4/);
 
-# Primary keys page
+# Show Primary keys page
 $t->get_ok("/mysqlviewerlite/showprimarykeys?database=$database")
   ->content_like(qr/Primary keys/)
   ->content_like(qr/table1/)
@@ -117,7 +117,7 @@ $t->get_ok("/mysqlviewerlite/showprimarykeys?database=$database")
   ->content_like(qr/table2/)
   ->content_like(qr/table3/);
 
-# Null allowed column page
+# Show Null allowed column page
 $t->get_ok("/mysqlviewerlite/shownullallowedcolumns?database=$database")
   ->content_like(qr/Null allowed column/)
   ->content_like(qr/table1/)
@@ -127,13 +127,22 @@ $t->get_ok("/mysqlviewerlite/shownullallowedcolumns?database=$database")
   ->content_unlike(qr/\Q(`column2_2`)/)
   ->content_like(qr/table3/);
 
-# Database engines page
+# Show Database engines page
 $t->get_ok("/mysqlviewerlite/showdatabaseengines?database=$database")
   ->content_like(qr/Database engines/)
   ->content_like(qr/table1/)
   ->content_like(qr/\Q(MyISAM)/)
   ->content_like(qr/table2/)
   ->content_like(qr/\Q(InnoDB)/)
+  ->content_like(qr/table3/);
+
+# Show Charsets
+$t->get_ok("/mysqlviewerlite/showcharsets?database=$database")
+  ->content_like(qr/Charsets/)
+  ->content_like(qr/table1/)
+  ->content_like(qr/\Q(ujis)/)
+  ->content_like(qr/table2/)
+  ->content_like(qr/\Q(utf8)/)
   ->content_like(qr/table3/);
 
 # Other route and prefix
@@ -183,7 +192,7 @@ $t->get_ok("/other/select?database=$database&table=table1")
   ->content_like(qr/3/)
   ->content_like(qr/4/);
 
-# Primary keys page
+# Show Primary keys page
 $t->get_ok("/other/showprimarykeys?database=$database")
   ->content_like(qr/Primary keys/)
   ->content_like(qr/table1/)
@@ -192,7 +201,7 @@ $t->get_ok("/other/showprimarykeys?database=$database")
   ->content_like(qr/table2/)
   ->content_like(qr/table3/);
 
-# Null allowed column page
+# Show Null allowed column page
 $t->get_ok("/other/shownullallowedcolumns?database=$database")
   ->content_like(qr/Null allowed column/)
   ->content_like(qr/table1/)
@@ -202,7 +211,7 @@ $t->get_ok("/other/shownullallowedcolumns?database=$database")
   ->content_unlike(qr/\Q(`column2_2`)/)
   ->content_like(qr/table3/);
 
-# Database engines page
+# Show Database engines page
 $t->get_ok("/other/showdatabaseengines?database=$database")
   ->content_like(qr/Database engines/)
   ->content_like(qr/table1/)

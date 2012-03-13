@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
 use Validator::Custom;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 # Validator
 my $vc = Validator::Custom->new;
@@ -81,7 +81,6 @@ sub register {
     ];
     my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
-    my $current_database = _current_database();
     my $table = $vresult->data->{table};
     
     my $table_def = _show_create_table($database, $table);
@@ -90,7 +89,6 @@ sub register {
       database => $database,
       table => $table, 
       table_def => $table_def,
-      current_database => $current_database
     );
   });
   
@@ -250,7 +248,7 @@ sub register {
     my $table = $vresult->data->{table};
     
     # Get null allowed columns
-    my $result = $dbi->select(table => $table, append => 'limit 0, 1000');
+    my $result = $dbi->select(table => "$database.$table", append => 'limit 0, 1000');
     my $header = $result->header;
     my $rows = $result->fetch_all;
     my $sql = $dbi->last_sql;
@@ -470,9 +468,7 @@ __DATA__
 
 <h3>Query</h3>
 <ul>
-% if ($database eq $current_database) {
   <li><a href="<%= url_for("/$prefix/select")->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
-% }
 </ul>
 
 @@ showprimarykeys.html.ep
