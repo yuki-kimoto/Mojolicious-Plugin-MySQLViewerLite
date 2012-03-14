@@ -83,7 +83,7 @@ sub action_index {
 sub action_tables {
   my ($viewer, $c) = @_;
   
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -105,7 +105,7 @@ sub action_table {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -132,7 +132,7 @@ sub action_showcreatetables {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -160,7 +160,7 @@ sub action_showprimarykeys {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -194,7 +194,7 @@ sub action_shownullallowedcolumns {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -231,7 +231,7 @@ sub action_showdatabaseengines {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -264,7 +264,7 @@ sub action_showcharsets {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -297,7 +297,7 @@ sub action_select {
   my ($viewer, $c) = @_;
   
   # Validation
-  my $params = _params($c);
+  my $params = $viewer->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -364,8 +364,8 @@ sub show_create_table {
   return $table_def;
 }
 
-sub _params {
-  my $c = shift;
+sub params {
+  my ($self, $c) = @_;
   my $params = {map {$_ => $c->param($_)} $c->param};
   return $params;
 }
