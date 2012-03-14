@@ -6,6 +6,8 @@ use Validator::Custom;
 
 our $VERSION = '0.06';
 
+has 'dbi';
+
 # Validator
 my $vc = Validator::Custom->new;
 $vc->register_constraint(
@@ -16,9 +18,6 @@ $vc->register_constraint(
   }
 );
 
-# DBI 
-my $dbi;
-
 # Viewer
 my %args = (template_class => __PACKAGE__);
 sub register {
@@ -27,14 +26,15 @@ sub register {
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
   $args{prefix} = $prefix;
   my $r = $conf->{route} // $app->routes;
-  
-  $dbi = DBIx::Custom->new(dbh => $dbh);
+
+  my $dbi = DBIx::Custom->new(dbh => $dbh);
+  my $viewer = __PACKAGE__->new(dbi => $dbi);
   
   # Top page
   $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub {
     my $self = shift;
-    my $database = _show_databases();
-    my $current_database = _current_database();
+    my $database = $viewer->show_databases;
+    my $current_database = $viewer->current_database;
     
     $self->render(
       'index',
@@ -56,7 +56,7 @@ sub register {
     ];
     my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
-    my $tables = _show_tables($database);
+    my $tables = $viewer->show_tables($database);
     
     return $self->render(
       %args,
@@ -83,7 +83,7 @@ sub register {
     my $database = $vresult->data->{database};
     my $table = $vresult->data->{table};
     
-    my $table_def = _show_create_table($database, $table);
+    my $table_def = $viewer->show_create_table($database, $table);
     return $self->render(
       %args,
       database => $database,
@@ -105,12 +105,12 @@ sub register {
     ];
     my $vresult = $vc->validate($params, $rule);
     my $database = $vresult->data->{database};
-    my $tables = _show_tables($database);
+    my $tables = $viewer->show_tables($database);
     
     # Get create tables
     my $create_tables = {};
     for my $table (@$tables) {
-      $create_tables->{$table} = _show_create_table($database, $table);
+      $create_tables->{$table} = $viewer->show_create_table($database, $table);
     }
     
     return $self->render(
@@ -135,10 +135,10 @@ sub register {
     my $database = $vresult->data->{database};
     
     # Get primary keys
-    my $tables = _show_tables($database);
+    my $tables = $viewer->show_tables($database);
     my $primary_keys = {};
     for my $table (@$tables) {
-      my $show_create_table = _show_create_table($database, $table) || '';
+      my $show_create_table = $viewer->show_create_table($database, $table) || '';
       my $primary_key = '';
       if ($show_create_table =~ /PRIMARY\s+KEY\s+(.+?)\n/i) {
         $primary_key = $1;
@@ -169,10 +169,10 @@ sub register {
     my $database = $vresult->data->{database};
     
     # Get null allowed columns
-    my $tables = _show_tables($database);
+    my $tables = $viewer->show_tables($database);
     my $null_allowed_columns = {};
     for my $table (@$tables) {
-      my $show_create_table = _show_create_table($database, $table) || '';
+      my $show_create_table = $viewer->show_create_table($database, $table) || '';
       my @lines = split(/\n/, $show_create_table);
       my $null_allowed_column = [];
       for my $line (@lines) {
@@ -206,10 +206,10 @@ sub register {
     my $database = $vresult->data->{database};
     
     # Get null allowed columns
-    my $tables = _show_tables($database);
+    my $tables = $viewer->show_tables($database);
     my $database_engines = {};
     for my $table (@$tables) {
-      my $show_create_table = _show_create_table($database, $table) || '';
+      my $show_create_table = $viewer->show_create_table($database, $table) || '';
       my $database_engine = '';
       if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
         $database_engine = $1;
@@ -239,10 +239,10 @@ sub register {
     my $database = $vresult->data->{database};
     
     # Get charsets
-    my $tables = _show_tables($database);
+    my $tables = $viewer->show_tables($database);
     my $charsets = {};
     for my $table (@$tables) {
-      my $show_create_table = _show_create_table($database, $table) || '';
+      my $show_create_table = $viewer->show_create_table($database, $table) || '';
       my $charset = '';
       if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
         $charset = $1;
@@ -292,22 +292,26 @@ sub register {
   }); 
 }
 
-sub _current_database { $dbi->execute('select database()')->fetch->[0] }
+sub current_database {
+  my $self = shift;
+  return $self->dbi->execute('select database()')->fetch->[0];
+}
 
-sub _show_databases {
+sub show_databases {
+  my $self = shift;
   
   my $databases = [];
-  my $database_rows = $dbi->execute('show databases')->all;
+  my $database_rows = $self->dbi->execute('show databases')->all;
   for my $database_row (@$database_rows) {
     push @$databases, $database_row->{(keys %$database_row)[0]};
   }
-  return $databases; 
+  return $databases;
 }
 
-sub _show_tables { 
-  my $database = shift;
+sub show_tables { 
+  my ($self, $database) = @_;
   my $table_rows;
-  eval { $table_rows = $dbi->execute("show tables from $database")->all };
+  eval { $table_rows = $self->dbi->execute("show tables from $database")->all };
   $table_rows ||= [];
   my $tables = [];
   for my $table_row (@$table_rows) {
@@ -316,10 +320,10 @@ sub _show_tables {
   return $tables;
 }
 
-sub _show_create_table {
-  my ($database, $table) = @_;
+sub show_create_table {
+  my ($self, $database, $table) = @_;
   my $table_def_row;
-  eval { $table_def_row = $dbi->execute("show create table $database.$table")->one };
+  eval { $table_def_row = $self->dbi->execute("show create table $database.$table")->one };
   $table_def_row ||= {};
   my $table_def = $table_def_row->{'Create Table'} || '';
   return $table_def;
@@ -524,7 +528,7 @@ __DATA__
             <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
               <%= $table %>
             </a>
-            <%= $primary_keys->{$table} %>
+            <%= $primary_keys->{$table} || '()' %>
           % }
         </td>
       % }
