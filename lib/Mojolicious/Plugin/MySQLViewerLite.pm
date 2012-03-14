@@ -6,14 +6,14 @@ use Validator::Custom;
 
 our $VERSION = '0.06';
 
-has [qw/dbi validator/];
+has [qw/dbi validator prefix/];
 
 # Viewer
-my %args = (template_class => __PACKAGE__);
 sub register {
   my ($self, $app, $conf) = @_;
   my $dbh = $conf->{dbh};
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
+  my %args = (template_class => __PACKAGE__);
   $args{prefix} = $prefix;
   my $r = $conf->{route} // $app->routes;
   
@@ -33,269 +33,298 @@ sub register {
   my $viewer = $args{viewer};
   $viewer ||= Mojolicious::Plugin::MySQLViewerLite->new(
     dbi => $dbi,
-    validator => $validator
+    validator => $validator,
+    prefix => $prefix
   );
   
   # Top page
-  $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub {
-    my $self = shift;
-    my $database = $viewer->show_databases;
-    my $current_database = $viewer->current_database;
-    
-    $self->render(
-      'index',
-      %args,
-      databases => $database,
-      current_database => $current_database
-    );
-  });
+  $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub { $viewer->action_index(shift) });
   
-  # Database
-  $r->get('/tables' => sub {
-    my $self = shift;
-    
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ] 
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    my $tables = $viewer->show_tables($database);
-    
-    return $self->render(
-      %args,
-      database => $database,
-      tables => $tables
-    );
-  });
+  # Tables
+  $r->get('/tables' => sub { $viewer->action_tables(shift) });
   
   # Table
-  $r->get('/table', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ],
-      table => {default => ''} => [
-        'safety_name'
-      ]
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    my $table = $vresult->data->{table};
-    
-    my $table_def = $viewer->show_create_table($database, $table);
-    return $self->render(
-      %args,
-      database => $database,
-      table => $table, 
-      table_def => $table_def,
-    );
-  });
+  $r->get('/table' => sub { $viewer->action_table(shift) });
 
   # Show create tables
-  $r->get('/showcreatetables', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ]
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    my $tables = $viewer->show_tables($database);
-    
-    # Get create tables
-    my $create_tables = {};
-    for my $table (@$tables) {
-      $create_tables->{$table} = $viewer->show_create_table($database, $table);
-    }
-    
-    return $self->render(
-      %args,
-      database => $database,
-      create_tables => $create_tables
-    );
-  });
+  $r->get('/showcreatetables' => sub { $viewer->action_showcreatetables(shift) });
   
   # Show primary keys
-  $r->get('/showprimarykeys', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ],
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    
-    # Get primary keys
-    my $tables = $viewer->show_tables($database);
-    my $primary_keys = {};
-    for my $table (@$tables) {
-      my $show_create_table = $viewer->show_create_table($database, $table) || '';
-      my $primary_key = '';
-      if ($show_create_table =~ /PRIMARY\s+KEY\s+(.+?)\n/i) {
-        $primary_key = $1;
-        $primary_key =~ s/,$//;
-      }
-      $primary_keys->{$table} = $primary_key;
-    }
-    
-    $self->render(
-      %args,
-      database => $database,
-      primary_keys => $primary_keys
-    );
-  });
+  $r->get('/showprimarykeys', sub { $viewer->action_showprimarykeys(shift) });
 
   # Show null allowed columns
-  $r->get('/shownullallowedcolumns', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ],
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    
-    # Get null allowed columns
-    my $tables = $viewer->show_tables($database);
-    my $null_allowed_columns = {};
-    for my $table (@$tables) {
-      my $show_create_table = $viewer->show_create_table($database, $table) || '';
-      my @lines = split(/\n/, $show_create_table);
-      my $null_allowed_column = [];
-      for my $line (@lines) {
-        next if /^\s*`/ || $line =~ /NOT\s+NULL/i;
-        if ($line =~ /^\s+(`\w+?`)/) {
-          push @$null_allowed_column, $1;
-        }
-      }
-      $null_allowed_columns->{$table} = $null_allowed_column;
-    }
-    
-    $self->render(
-      %args,
-      database => $database,
-      null_allowed_columns => $null_allowed_columns
-    );
-  });
+  $r->get('/shownullallowedcolumns', sub { $viewer->action_shownullallowedcolumns(shift) });
 
   # Show database engines
-  $r->get('/showdatabaseengines', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ],
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    
-    # Get null allowed columns
-    my $tables = $viewer->show_tables($database);
-    my $database_engines = {};
-    for my $table (@$tables) {
-      my $show_create_table = $viewer->show_create_table($database, $table) || '';
-      my $database_engine = '';
-      if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
-        $database_engine = $1;
-      }
-      $database_engines->{$table} = $database_engine;
-    }
-    
-    $self->render(
-      %args,
-      database => $database,
-      database_engines => $database_engines
-    );
-  });
+  $r->get('/showdatabaseengines', sub { $viewer->action_showdatabaseengines(shift) });
 
   # Show charsets
-  $r->get('/showcharsets', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ],
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    
-    # Get charsets
-    my $tables = $viewer->show_tables($database);
-    my $charsets = {};
-    for my $table (@$tables) {
-      my $show_create_table = $viewer->show_create_table($database, $table) || '';
-      my $charset = '';
-      if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
-        $charset = $1;
-      }
-      $charsets->{$table} = $charset;
-    }
-    
-    $self->render(
-      %args,
-      database => $database,
-      charsets => $charsets
-    );
-  });
+  $r->get('/showcharsets', sub { $viewer->action_showcharsets(shift) });
   
   # Select
-  $r->get('/select', sub {
-    my $self = shift;
-    
-    # Validation
-    my $params = _params($self);
-    my $rule = [
-      database => {default => ''} => [
-        'safety_name'
-      ],
-      table => {default => ''} => [
-        'safety_name'
-      ]
-    ];
-    my $vresult = $viewer->validator->validate($params, $rule);
-    my $database = $vresult->data->{database};
-    my $table = $vresult->data->{table};
-    
-    # Get null allowed columns
-    my $result = $dbi->select(table => "$database.$table", append => 'limit 0, 1000');
-    my $header = $result->header;
-    my $rows = $result->fetch_all;
-    my $sql = $dbi->last_sql;
-    
-    $self->render(
-      %args,
-      database => $database,
-      table => $table,
-      header => $header,
-      rows => $rows,
-      sql => $sql
-    );
-  }); 
+  $r->get('/select', sub { $viewer->action_select(shift) });
+}
+
+sub action_index {
+  my ($viewer, $c) = @_;
+  
+  my $database = $viewer->show_databases;
+  my $current_database = $viewer->current_database;
+  
+  $c->render(
+    'index',
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    databases => $database,
+    current_database => $current_database
+  );
+}
+
+sub action_tables {
+  my ($viewer, $c) = @_;
+  
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ] 
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  my $tables = $viewer->show_tables($database);
+  
+  return $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    tables => $tables
+  );
+}
+
+sub action_table {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ],
+    table => {default => ''} => [
+      'safety_name'
+    ]
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  my $table = $vresult->data->{table};
+  
+  my $table_def = $viewer->show_create_table($database, $table);
+  return $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    table => $table, 
+    table_def => $table_def,
+  );
+}
+
+sub action_showcreatetables {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ]
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  my $tables = $viewer->show_tables($database);
+  
+  # Get create tables
+  my $create_tables = {};
+  for my $table (@$tables) {
+    $create_tables->{$table} = $viewer->show_create_table($database, $table);
+  }
+  
+  return $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    create_tables => $create_tables
+  );
+}
+
+sub action_showprimarykeys {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ],
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  
+  # Get primary keys
+  my $tables = $viewer->show_tables($database);
+  my $primary_keys = {};
+  for my $table (@$tables) {
+    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my $primary_key = '';
+    if ($show_create_table =~ /PRIMARY\s+KEY\s+(.+?)\n/i) {
+      $primary_key = $1;
+      $primary_key =~ s/,$//;
+    }
+    $primary_keys->{$table} = $primary_key;
+  }
+  
+  $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    primary_keys => $primary_keys
+  );
+}
+
+sub action_shownullallowedcolumns {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ],
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  
+  # Get null allowed columns
+  my $tables = $viewer->show_tables($database);
+  my $null_allowed_columns = {};
+  for my $table (@$tables) {
+    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my @lines = split(/\n/, $show_create_table);
+    my $null_allowed_column = [];
+    for my $line (@lines) {
+      next if /^\s*`/ || $line =~ /NOT\s+NULL/i;
+      if ($line =~ /^\s+(`\w+?`)/) {
+        push @$null_allowed_column, $1;
+      }
+    }
+    $null_allowed_columns->{$table} = $null_allowed_column;
+  }
+  
+  $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    null_allowed_columns => $null_allowed_columns
+  );
+}
+
+sub action_showdatabaseengines {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ],
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  
+  # Get null allowed columns
+  my $tables = $viewer->show_tables($database);
+  my $database_engines = {};
+  for my $table (@$tables) {
+    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my $database_engine = '';
+    if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
+      $database_engine = $1;
+    }
+    $database_engines->{$table} = $database_engine;
+  }
+  
+  $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    database_engines => $database_engines
+  );
+}
+
+sub action_showcharsets {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ],
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  
+  # Get charsets
+  my $tables = $viewer->show_tables($database);
+  my $charsets = {};
+  for my $table (@$tables) {
+    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my $charset = '';
+    if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
+      $charset = $1;
+    }
+    $charsets->{$table} = $charset;
+  }
+  
+  $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    charsets => $charsets
+  );
+}
+
+sub action_select {
+  my ($viewer, $c) = @_;
+  
+  # Validation
+  my $params = _params($c);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ],
+    table => {default => ''} => [
+      'safety_name'
+    ]
+  ];
+  my $vresult = $viewer->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  my $table = $vresult->data->{table};
+  
+  # Get null allowed columns
+  my $result = $viewer->dbi->select(table => "$database.$table", append => 'limit 0, 1000');
+  my $header = $result->header;
+  my $rows = $result->fetch_all;
+  my $sql = $viewer->dbi->last_sql;
+  
+  $c->render(
+    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    prefix => $viewer->prefix,
+    database => $database,
+    table => $table,
+    header => $header,
+    rows => $rows,
+    sql => $sql
+  );
 }
 
 sub current_database {
