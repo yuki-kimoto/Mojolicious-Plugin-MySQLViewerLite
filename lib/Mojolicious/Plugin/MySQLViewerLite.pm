@@ -13,8 +13,6 @@ sub register {
   my ($self, $app, $conf) = @_;
   my $dbh = $conf->{dbh};
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
-  my %args = (template_class => __PACKAGE__);
-  $args{prefix} = $prefix;
   my $r = $conf->{route} // $app->routes;
   
   # DBI
@@ -30,8 +28,7 @@ sub register {
   );
   
   # Viewer
-  my $viewer = $args{viewer};
-  $viewer ||= Mojolicious::Plugin::MySQLViewerLite->new(
+  my $viewer = Mojolicious::Plugin::MySQLViewerLite->new(
     dbi => $dbi,
     validator => $validator,
     prefix => $prefix
@@ -39,25 +36,19 @@ sub register {
   
   # Top page
   $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub { $viewer->action_index(shift) });
-  
   # Tables
   $r->get('/tables' => sub { $viewer->action_tables(shift) });
-  
   # Table
   $r->get('/table' => sub { $viewer->action_table(shift) });
 
   # Show create tables
   $r->get('/showcreatetables' => sub { $viewer->action_showcreatetables(shift) });
-  
   # Show primary keys
   $r->get('/showprimarykeys', sub { $viewer->action_showprimarykeys(shift) });
-
   # Show null allowed columns
   $r->get('/shownullallowedcolumns', sub { $viewer->action_shownullallowedcolumns(shift) });
-
   # Show database engines
   $r->get('/showdatabaseengines', sub { $viewer->action_showdatabaseengines(shift) });
-
   # Show charsets
   $r->get('/showcharsets', sub { $viewer->action_showcharsets(shift) });
   
@@ -73,7 +64,7 @@ sub action_index {
   
   $c->render(
     'index',
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     databases => $database,
     current_database => $current_database
@@ -94,7 +85,7 @@ sub action_tables {
   my $tables = $viewer->show_tables($database);
   
   return $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     tables => $tables
@@ -120,7 +111,7 @@ sub action_table {
   
   my $table_def = $viewer->show_create_table($database, $table);
   return $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     table => $table, 
@@ -149,7 +140,7 @@ sub action_showcreatetables {
   }
   
   return $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     create_tables => $create_tables
@@ -183,7 +174,7 @@ sub action_showprimarykeys {
   }
   
   $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     primary_keys => $primary_keys
@@ -220,7 +211,7 @@ sub action_shownullallowedcolumns {
   }
   
   $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     null_allowed_columns => $null_allowed_columns
@@ -253,7 +244,7 @@ sub action_showdatabaseengines {
   }
   
   $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     database_engines => $database_engines
@@ -286,7 +277,7 @@ sub action_showcharsets {
   }
   
   $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     charsets => $charsets
@@ -317,7 +308,7 @@ sub action_select {
   my $sql = $viewer->dbi->last_sql;
   
   $c->render(
-    template_class => 'Mojolicious::Plugin::MySQLViewerLite',
+    template_class => __PACKAGE__,
     prefix => $viewer->prefix,
     database => $database,
     table => $table,
