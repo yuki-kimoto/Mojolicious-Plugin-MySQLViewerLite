@@ -6,17 +6,7 @@ use Validator::Custom;
 
 our $VERSION = '0.06';
 
-has 'dbi';
-
-# Validator
-my $vc = Validator::Custom->new;
-$vc->register_constraint(
-  safety_name => sub {
-    my $name = shift;
-    
-    return ($name || '') =~ /^\w+$/ ? 1 : 0;
-  }
-);
+has [qw/dbi validator/];
 
 # Viewer
 my %args = (template_class => __PACKAGE__);
@@ -26,9 +16,25 @@ sub register {
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
   $args{prefix} = $prefix;
   my $r = $conf->{route} // $app->routes;
-
+  
+  # DBI
   my $dbi = DBIx::Custom->new(dbh => $dbh);
-  my $viewer = __PACKAGE__->new(dbi => $dbi);
+  
+  # Validator
+  my $validator = Validator::Custom->new;
+  $validator->register_constraint(
+    safety_name => sub {
+      my $name = shift;
+      return ($name || '') =~ /^\w+$/ ? 1 : 0;
+    }
+  );
+  
+  # Viewer
+  my $viewer = $args{viewer};
+  $viewer ||= Mojolicious::Plugin::MySQLViewerLite->new(
+    dbi => $dbi,
+    validator => $validator
+  );
   
   # Top page
   $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub {
@@ -54,7 +60,7 @@ sub register {
         'safety_name'
       ] 
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     my $tables = $viewer->show_tables($database);
     
@@ -79,7 +85,7 @@ sub register {
         'safety_name'
       ]
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     my $table = $vresult->data->{table};
     
@@ -103,7 +109,7 @@ sub register {
         'safety_name'
       ]
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     my $tables = $viewer->show_tables($database);
     
@@ -131,7 +137,7 @@ sub register {
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get primary keys
@@ -165,7 +171,7 @@ sub register {
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get null allowed columns
@@ -202,7 +208,7 @@ sub register {
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get null allowed columns
@@ -235,7 +241,7 @@ sub register {
         'safety_name'
       ],
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     
     # Get charsets
@@ -271,7 +277,7 @@ sub register {
         'safety_name'
       ]
     ];
-    my $vresult = $vc->validate($params, $rule);
+    my $vresult = $viewer->validator->validate($params, $rule);
     my $database = $vresult->data->{database};
     my $table = $vresult->data->{table};
     
@@ -683,7 +689,7 @@ Database handle object in L<DBI>.
 
 Application base path, default to C<mysqlviewerlite>.
 
-=head C<route>
+=head2 C<route>
 
     route => $route
 
