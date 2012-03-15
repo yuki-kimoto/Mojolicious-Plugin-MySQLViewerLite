@@ -211,20 +211,7 @@ sub action_shownullallowedcolumns {
   my $database = $vresult->data->{database};
   
   # Get null allowed columns
-  my $tables = $self->show_tables($database);
-  my $null_allowed_columns = {};
-  for my $table (@$tables) {
-    my $show_create_table = $self->show_create_table($database, $table) || '';
-    my @lines = split(/\n/, $show_create_table);
-    my $null_allowed_column = [];
-    for my $line (@lines) {
-      next if /^\s*`/ || $line =~ /NOT\s+NULL/i;
-      if ($line =~ /^\s+(`\w+?`)/) {
-        push @$null_allowed_column, $1;
-      }
-    }
-    $null_allowed_columns->{$table} = $null_allowed_column;
-  }
+  my $null_allowed_columns = $self->show_null_allowed_columns($database);
   
   $c->render(
     controller => 'mysqlviewerlite',
@@ -364,6 +351,25 @@ sub show_primary_key {
     $primary_key =~ s/,$//;
   }
   return $primary_key;
+}
+
+sub show_null_allowed_columns {
+  my ($self, $database) = @_;
+  my $tables = $self->show_tables($database);
+  my $null_allowed_columns = {};
+  for my $table (@$tables) {
+    my $show_create_table = $self->show_create_table($database, $table) || '';
+    my @lines = split(/\n/, $show_create_table);
+    my $null_allowed_column = [];
+    for my $line (@lines) {
+      next if /^\s*`/ || $line =~ /NOT\s+NULL/i;
+      if ($line =~ /^\s+(`\w+?`)/) {
+        push @$null_allowed_column, $1;
+      }
+    }
+    $null_allowed_columns->{$table} = $null_allowed_column;
+  }
+  return $null_allowed_columns;
 }
 
 sub show_databases {
