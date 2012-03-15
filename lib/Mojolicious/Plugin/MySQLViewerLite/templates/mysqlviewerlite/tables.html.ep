@@ -1,4 +1,4 @@
-% layout 'mysqlviewerlite_common', title => "Tables in $database";
+% layout 'sqliteviewerlite/common', title => "Tables in $database";
 
 %= stylesheet begin
   ul {

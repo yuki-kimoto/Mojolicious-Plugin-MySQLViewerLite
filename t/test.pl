@@ -11,7 +11,7 @@ my $dbi = DBIx::Custom->connect(
   password => 'dbix_custom'
 );
 
-plugin 'MySQLViewerLite', dbh => $dbi->dbh, prefix => 'ppp';
+plugin 'MySQLViewerLite', dbh => $dbi->dbh, prefix => 'mysqlviewer';
 
 get '/' => {text => 'a'};
 
