@@ -3,6 +3,8 @@ package Mojolicious::Plugin::MySQLViewerLite;
 use Mojo::Base 'Mojolicious::Plugin';
 use DBIx::Custom;
 use Validator::Custom;
+use File::Basename 'dirname';
+use Cwd 'abs_path';
 
 our $VERSION = '0.06';
 
@@ -14,6 +16,13 @@ sub register {
   my $dbh = $conf->{dbh};
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
   my $r = $conf->{route} // $app->routes;
+  
+  my $class = __PACKAGE__;
+  $class =~ s/::/\//g;
+  $class .= '.pm';
+  my $public = abs_path dirname $INC{$class};
+  my $renderer = $app->renderer;
+  push @{$renderer->paths}, "$public/MySQLViewerLite/templates";
   
   # DBI
   my $dbi = DBIx::Custom->new(dbh => $dbh);
@@ -62,9 +71,10 @@ sub action_index {
   my $database = $viewer->show_databases;
   my $current_database = $viewer->current_database;
   
+  $DB::single = 1;
   $c->render(
-    'index',
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'index',
     prefix => $viewer->prefix,
     databases => $database,
     current_database => $current_database
@@ -85,7 +95,8 @@ sub action_tables {
   my $tables = $viewer->show_tables($database);
   
   return $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'tables',
     prefix => $viewer->prefix,
     database => $database,
     tables => $tables
@@ -111,7 +122,8 @@ sub action_table {
   
   my $table_def = $viewer->show_create_table($database, $table);
   return $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'table',
     prefix => $viewer->prefix,
     database => $database,
     table => $table, 
@@ -140,7 +152,8 @@ sub action_showcreatetables {
   }
   
   return $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'showcreatetables',
     prefix => $viewer->prefix,
     database => $database,
     create_tables => $create_tables
@@ -174,7 +187,8 @@ sub action_showprimarykeys {
   }
   
   $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'showprimarykeys',
     prefix => $viewer->prefix,
     database => $database,
     primary_keys => $primary_keys
@@ -211,7 +225,8 @@ sub action_shownullallowedcolumns {
   }
   
   $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'shownullallowedcolumns',
     prefix => $viewer->prefix,
     database => $database,
     null_allowed_columns => $null_allowed_columns
@@ -244,7 +259,8 @@ sub action_showdatabaseengines {
   }
   
   $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'showdatabaseengines',
     prefix => $viewer->prefix,
     database => $database,
     database_engines => $database_engines
@@ -277,7 +293,8 @@ sub action_showcharsets {
   }
   
   $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'showcharsets',
     prefix => $viewer->prefix,
     database => $database,
     charsets => $charsets
@@ -308,7 +325,8 @@ sub action_select {
   my $sql = $viewer->dbi->last_sql;
   
   $c->render(
-    template_class => __PACKAGE__,
+    controller => 'mysqlviewerlite',
+    action => 'select',
     prefix => $viewer->prefix,
     database => $database,
     table => $table,
@@ -362,293 +380,6 @@ sub params {
 }
 
 1;
-
-__DATA__
-
-@@ layouts/common.html.ep
-<!doctype html><html>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
-<head>
-  <title>
-    % if (stash 'title') {
-      <%= stash('title') %>
-    % }
-    MySQL Vewer Lite
-  </title>
-  %= javascript '/js/jquery.js'
-  %= stylesheet begin 
-    *, body {
-      padding 0;
-      margin: 0;
-    }
-    
-    #container {
-      padding-top: 15px;
-      padding-bottom: 15px;
-      padding-left: 15px;
-      padding-right: 15px;
-    }
-    
-    h1 {
-      text-align: center;
-      font-size: 250%;
-      padding-top: 5px;
-      padding-bottom: 5px;
-      padding-left: 40px;
-      background-color: #F9F9FF
-    }
-
-    h2 {
-      font-size: 230%;
-      margin-bottom: 15px;
-      margin-left: 10px;
-    }
-
-    h3 {
-      font-size: 200%;
-      margin-bottom: 15px;
-      margin-left: 30px;
-    }
-    
-    ul {
-      margin-left: 8px;
-      font-size: 190%;
-      list-style-type: circle;
-    }
-    
-    li {
-      margin-bottom: 6px;
-    }
-    
-    a, a:visited {
-      color: #0000EE;
-      text-decoration: none;
-    }
-    
-    a:hover {
-      color: #EE0000;
-    }
-    
-    i {
-      color: #66CC77;
-      font-style: normal;
-      font-size: 95%;
-    }
-    
-    table {
-      border-collapse: collapse;
-      margin-left:35px;
-      margin-bottom:20px;
-    }
-    
-    table, td, th {
-      border: 1px solid #9999CC;
-      padding-left:7px;
-      padding-right:7px;
-      padding-top: 2px;
-      padding-bottom: 3px;
-    }
-    
-    pre {
-      border: 1px solid #9999CC;
-      padding:15px;
-      margin-left:35px;
-      margin-bottom:20px;
-    }
-
-  % end
-  
-</head>
-<body>
-  <h1><a href="<%= "/$prefix" %>">MySQL Viewer Lite</a></h1>
-  <hr>
-  <div id="container">
-    %= content;
-  </div>
-</body>
-</html>
-
-@@ index.html.ep
-% layout 'common';
-
-<h2>Databases</h2>
-<ul>
-% for my $database (sort @$databases) {
-<li>
-  <a href="<%= url_for("/$prefix/tables")->query(database => $database) %>"><%= $database %>
-  %= $current_database eq $database ? '(current)' : ''
-</li>
-% }
-</ul>
-
-@@ tables.html.ep
-% layout 'common', title => "Tables in $database";
-
-%= stylesheet begin
-  ul {
-    margin-left: 8px;
-    font-size: 150%;
-    list-style-type: circle;
-  }
-
-  li {
-    margin-bottom: 6px;
-  }
-
-% end
-
-<h2>Tables in <i><%= $database %></i> (<%= @$tables %>)</h2>
-<table>
-  % for (my $i = 0; $i < @$tables; $i += 3) {
-    <tr>
-      % for my $k (0 .. 2) {
-        <td>
-          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a></li>
-        </td>
-      % }
-    </tr>
-  % }
-</table>
-
-<h2>Utilities</h2>
-<ul>
-  <li><a href="<%= url_for("/$prefix/showcreatetables")->query(database => $database) %>">Show create tables</a></li>
-  <li><a href="<%= url_for("/$prefix/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
-  <li><a href="<%= url_for("/$prefix/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
-  <li><a href="<%= url_for("/$prefix/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
-  <li><a href="<%= url_for("/$prefix/showcharsets")->query(database => $database) %>">Show charsets</a></li>
-</ul>
-
-@@ table.html.ep
-% layout 'common', title => "$table in $database";
-<h2>Table <i><%= $table %></i> in <%= $database %></h2>
-<h3>show create table</h3>
-<pre><%= $table_def %></pre>
-
-<h3>Query</h3>
-<ul>
-  <li><a href="<%= url_for("/$prefix/select")->query(database => $database, table => $table) %>">select * from <%= $table %> limit 0, 1000</a></li>
-</ul>
-
-@@ showcreatetables.html.ep
-% layout 'common', title => "Create tables in $database ";
-% my $tables = [sort keys %$create_tables];
-<h2>Create tables in <i><%= $database %></i></h2>
-% for my $table (@$tables) {
-  <pre>
-    <%= $create_tables->{$table} =%>
-  </pre>
-% }
-
-@@ showprimarykeys.html.ep
-% layout 'common', title => "Primary keys in $database";
-% my $tables = [sort keys %$primary_keys];
-<h2>Primary keys in <i><%= $database %></i> (<%= @$tables %>)</h2>
-<table>
-  % for (my $i = 0; $i < @$tables; $i += 3) {
-    <tr>
-      % for my $k (0 .. 2) {
-        <td>
-          % my $table = $tables->[$i + $k];
-          % if (defined $table) {
-            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
-              <%= $table %>
-            </a>
-            <%= $primary_keys->{$table} || '()' %>
-          % }
-        </td>
-      % }
-    </tr>
-  % }
-</table>
-
-@@ shownullallowedcolumns.html.ep
-% layout 'common', title => "Null allowed columns in $database";
-% my $tables = [sort keys %$null_allowed_columns];
-<h2>Null allowed columns in <i><%= $database %></i> (<%= @$tables %>)</h2>
-<table>
-  % for (my $i = 0; $i < @$tables; $i += 3) {
-    <tr>
-      % for my $k (0 .. 2) {
-        <td>
-          % my $table = $tables->[$i + $k];
-          % if (defined $table) {
-            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
-              <%= $table %>
-            </a>
-            (<%= join(', ', @{$null_allowed_columns->{$table} || []}) %>)
-          % }
-        </td>
-      % }
-    </tr>
-  % }
-</table>
-
-@@ showdatabaseengines.html.ep
-% layout 'common', title => "Database engines in $database ";
-% my $tables = [sort keys %$database_engines];
-<h2>Database engines in <i><%= $database %></i> (<%= @$tables %>)</h2>
-<table>
-  % for (my $i = 0; $i < @$tables; $i += 3) {
-    <tr>
-      % for my $k (0 .. 2) {
-        <td>
-          % my $table = $tables->[$i + $k];
-          % if (defined $table) {
-            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
-              <%= $table %>
-            </a>
-            (<%= $database_engines->{$table} %>)
-          % }
-        </td>
-      % }
-    </tr>
-  % }
-</table>
-
-@@ showcharsets.html.ep
-% layout 'common', title => "Charsets in $database ";
-% my $tables = [sort keys %$charsets];
-<h2>Charsets in <i><%= $database %></i> (<%= @$tables %>)</h2>
-<table>
-  % for (my $i = 0; $i < @$tables; $i += 3) {
-    <tr>
-      % for my $k (0 .. 2) {
-        <td>
-          % my $table = $tables->[$i + $k];
-          % if (defined $table) {
-            <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $table) %>">
-              <%= $table %>
-            </a>
-            (<%= $charsets->{$table} %>)
-          % }
-        </td>
-      % }
-    </tr>
-  % }
-</table>
-
-@@ select.html.ep
-% layout 'common', title => "Select * from $table limit 0, 1000";
-
-<h2>select * from <i><%= $table %></i> limit 0, 1000</h2>
-
-<table>
-<tr>
-  % for my $h (@$header) {
-      <th><%= $h %></th>
-  % }
-</tr>
-% for my $row (@$rows) {
-  <tr>
-    % for my $data (@$row) {
-      <td><%= $data %></td>
-    % }
-  </tr>
-% }
-</table>
-
-__END__
 
 =head1 NAME
 
