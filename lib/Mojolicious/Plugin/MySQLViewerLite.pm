@@ -8,7 +8,19 @@ use Cwd 'abs_path';
 
 our $VERSION = '0.06';
 
-has [qw/dbi validator prefix/];
+has 'prefix';
+has validator => sub {
+  my $validator = Validator::Custom->new;
+  $validator->register_constraint(
+    safety_name => sub {
+      my $name = shift;
+      return ($name || '') =~ /^\w+$/ ? 1 : 0;
+    }
+  );
+  return $validator;
+};
+
+has dbi => sub { DBIx::Custom->new };
 
 # Viewer
 sub register {
@@ -17,52 +29,52 @@ sub register {
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
   my $r = $conf->{route} // $app->routes;
   
+  # Add Renderer path
+  $self->add_renderer_path($app->renderer);
+  
+  # Set Attribute
+  $self->dbi->dbh($dbh);
+  $self->prefix($prefix);
+  
+  $r = $self->create_routes($r);
+}
+
+sub add_renderer_path {
+  my ($self, $renderer) = @_;
   my $class = __PACKAGE__;
   $class =~ s/::/\//g;
   $class .= '.pm';
   my $public = abs_path dirname $INC{$class};
-  my $renderer = $app->renderer;
   push @{$renderer->paths}, "$public/MySQLViewerLite/templates";
+}
+
+sub create_routes {
+  my ($self, $r) = @_;
   
-  # DBI
-  my $dbi = DBIx::Custom->new(dbh => $dbh);
-  
-  # Validator
-  my $validator = Validator::Custom->new;
-  $validator->register_constraint(
-    safety_name => sub {
-      my $name = shift;
-      return ($name || '') =~ /^\w+$/ ? 1 : 0;
-    }
-  );
-  
-  # Viewer
-  my $viewer = Mojolicious::Plugin::MySQLViewerLite->new(
-    dbi => $dbi,
-    validator => $validator,
-    prefix => $prefix
-  );
-  
+  my $prefix = $self->prefix;
+
   # Top page
-  $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub { $viewer->action_index(shift) });
+  $r = $r->waypoint("/$prefix")->via('get')->to(cb => sub { $self->action_index(shift) });
   # Tables
-  $r->get('/tables' => sub { $viewer->action_tables(shift) });
+  $r->get('/tables' => sub { $self->action_tables(shift) });
   # Table
-  $r->get('/table' => sub { $viewer->action_table(shift) });
+  $r->get('/table' => sub { $self->action_table(shift) });
 
   # Show create tables
-  $r->get('/showcreatetables' => sub { $viewer->action_showcreatetables(shift) });
+  $r->get('/showcreatetables' => sub { $self->action_showcreatetables(shift) });
   # Show primary keys
-  $r->get('/showprimarykeys', sub { $viewer->action_showprimarykeys(shift) });
+  $r->get('/showprimarykeys', sub { $self->action_showprimarykeys(shift) });
   # Show null allowed columns
-  $r->get('/shownullallowedcolumns', sub { $viewer->action_shownullallowedcolumns(shift) });
+  $r->get('/shownullallowedcolumns', sub { $self->action_shownullallowedcolumns(shift) });
   # Show database engines
-  $r->get('/showdatabaseengines', sub { $viewer->action_showdatabaseengines(shift) });
+  $r->get('/showdatabaseengines', sub { $self->action_showdatabaseengines(shift) });
   # Show charsets
-  $r->get('/showcharsets', sub { $viewer->action_showcharsets(shift) });
+  $r->get('/showcharsets', sub { $self->action_showcharsets(shift) });
   
   # Select
-  $r->get('/select', sub { $viewer->action_select(shift) });
+  $r->get('/select', sub { $self->action_select(shift) });
+
+  return $r;
 }
 
 sub action_index {
