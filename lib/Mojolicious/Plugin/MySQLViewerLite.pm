@@ -78,48 +78,48 @@ sub create_routes {
 }
 
 sub action_index {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
-  my $database = $viewer->show_databases;
-  my $current_database = $viewer->current_database;
+  my $database = $self->show_databases;
+  my $current_database = $self->current_database;
   
   $DB::single = 1;
   $c->render(
     controller => 'mysqlviewerlite',
     action => 'index',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     databases => $database,
     current_database => $current_database
   );
 }
 
 sub action_tables {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
     ] 
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
-  my $tables = $viewer->show_tables($database);
+  my $tables = $self->show_tables($database);
   
   return $c->render(
     controller => 'mysqlviewerlite',
     action => 'tables',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     tables => $tables
   );
 }
 
 sub action_table {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -128,15 +128,15 @@ sub action_table {
       'safety_name'
     ]
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
   my $table = $vresult->data->{table};
   
-  my $table_def = $viewer->show_create_table($database, $table);
+  my $table_def = $self->show_create_table($database, $table);
   return $c->render(
     controller => 'mysqlviewerlite',
     action => 'table',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     table => $table, 
     table_def => $table_def,
@@ -144,87 +144,77 @@ sub action_table {
 }
 
 sub action_showcreatetables {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
     ]
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
-  my $tables = $viewer->show_tables($database);
+  my $tables = $self->show_tables($database);
   
   # Get create tables
   my $create_tables = {};
   for my $table (@$tables) {
-    $create_tables->{$table} = $viewer->show_create_table($database, $table);
+    $create_tables->{$table} = $self->show_create_table($database, $table);
   }
   
   return $c->render(
     controller => 'mysqlviewerlite',
     action => 'showcreatetables',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     create_tables => $create_tables
   );
 }
 
 sub action_showprimarykeys {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
     ],
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
   
   # Get primary keys
-  my $tables = $viewer->show_tables($database);
-  my $primary_keys = {};
-  for my $table (@$tables) {
-    my $show_create_table = $viewer->show_create_table($database, $table) || '';
-    my $primary_key = '';
-    if ($show_create_table =~ /PRIMARY\s+KEY\s+(.+?)\n/i) {
-      $primary_key = $1;
-      $primary_key =~ s/,$//;
-    }
-    $primary_keys->{$table} = $primary_key;
-  }
+  my $primary_keys = $self->show_primary_keys($database);
   
   $c->render(
     controller => 'mysqlviewerlite',
     action => 'showprimarykeys',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     primary_keys => $primary_keys
   );
 }
 
 sub action_shownullallowedcolumns {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
     ],
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
   
   # Get null allowed columns
-  my $tables = $viewer->show_tables($database);
+  my $tables = $self->show_tables($database);
   my $null_allowed_columns = {};
   for my $table (@$tables) {
-    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my $show_create_table = $self->show_create_table($database, $table) || '';
     my @lines = split(/\n/, $show_create_table);
     my $null_allowed_column = [];
     for my $line (@lines) {
@@ -239,30 +229,30 @@ sub action_shownullallowedcolumns {
   $c->render(
     controller => 'mysqlviewerlite',
     action => 'shownullallowedcolumns',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     null_allowed_columns => $null_allowed_columns
   );
 }
 
 sub action_showdatabaseengines {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
     ],
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
   
   # Get null allowed columns
-  my $tables = $viewer->show_tables($database);
+  my $tables = $self->show_tables($database);
   my $database_engines = {};
   for my $table (@$tables) {
-    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my $show_create_table = $self->show_create_table($database, $table) || '';
     my $database_engine = '';
     if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
       $database_engine = $1;
@@ -273,30 +263,30 @@ sub action_showdatabaseengines {
   $c->render(
     controller => 'mysqlviewerlite',
     action => 'showdatabaseengines',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     database_engines => $database_engines
   );
 }
 
 sub action_showcharsets {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
     ],
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
   
   # Get charsets
-  my $tables = $viewer->show_tables($database);
+  my $tables = $self->show_tables($database);
   my $charsets = {};
   for my $table (@$tables) {
-    my $show_create_table = $viewer->show_create_table($database, $table) || '';
+    my $show_create_table = $self->show_create_table($database, $table) || '';
     my $charset = '';
     if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
       $charset = $1;
@@ -307,17 +297,17 @@ sub action_showcharsets {
   $c->render(
     controller => 'mysqlviewerlite',
     action => 'showcharsets',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     charsets => $charsets
   );
 }
 
 sub action_select {
-  my ($viewer, $c) = @_;
+  my ($self, $c) = @_;
   
   # Validation
-  my $params = $viewer->params($c);
+  my $params = $self->params($c);
   my $rule = [
     database => {default => ''} => [
       'safety_name'
@@ -326,20 +316,20 @@ sub action_select {
       'safety_name'
     ]
   ];
-  my $vresult = $viewer->validator->validate($params, $rule);
+  my $vresult = $self->validator->validate($params, $rule);
   my $database = $vresult->data->{database};
   my $table = $vresult->data->{table};
   
   # Get null allowed columns
-  my $result = $viewer->dbi->select(table => "$database.$table", append => 'limit 0, 1000');
+  my $result = $self->dbi->select(table => "$database.$table", append => 'limit 0, 1000');
   my $header = $result->header;
   my $rows = $result->fetch_all;
-  my $sql = $viewer->dbi->last_sql;
+  my $sql = $self->dbi->last_sql;
   
   $c->render(
     controller => 'mysqlviewerlite',
     action => 'select',
-    prefix => $viewer->prefix,
+    prefix => $self->prefix,
     database => $database,
     table => $table,
     header => $header,
@@ -351,6 +341,29 @@ sub action_select {
 sub current_database {
   my $self = shift;
   return $self->dbi->execute('select database()')->fetch->[0];
+}
+
+sub show_primary_keys {
+  my ($self, $database) = @_;
+
+  my $tables = $self->show_tables($database);
+  my $primary_keys = {};
+  for my $table (@$tables) {
+    my $primary_key = $self->show_primary_key($database, $table);
+    $primary_keys->{$table} = $primary_key;
+  }
+  return $primary_keys;
+}
+
+sub show_primary_key {
+  my ($self, $database, $table) = @_;
+  my $show_create_table = $self->show_create_table($database, $table) || '';
+  my $primary_key = '';
+  if ($show_create_table =~ /PRIMARY\s+KEY\s+(.+?)\n/i) {
+    $primary_key = $1;
+    $primary_key =~ s/,$//;
+  }
+  return $primary_key;
 }
 
 sub show_databases {
