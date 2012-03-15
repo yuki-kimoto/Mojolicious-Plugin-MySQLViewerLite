@@ -236,16 +236,7 @@ sub action_showdatabaseengines {
   my $database = $vresult->data->{database};
   
   # Get null allowed columns
-  my $tables = $self->show_tables($database);
-  my $database_engines = {};
-  for my $table (@$tables) {
-    my $show_create_table = $self->show_create_table($database, $table) || '';
-    my $database_engine = '';
-    if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
-      $database_engine = $1;
-    }
-    $database_engines->{$table} = $database_engine;
-  }
+  my $database_engines = $self->show_database_engines($database);
   
   $c->render(
     controller => 'mysqlviewerlite',
@@ -270,16 +261,7 @@ sub action_showcharsets {
   my $database = $vresult->data->{database};
   
   # Get charsets
-  my $tables = $self->show_tables($database);
-  my $charsets = {};
-  for my $table (@$tables) {
-    my $show_create_table = $self->show_create_table($database, $table) || '';
-    my $charset = '';
-    if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
-      $charset = $1;
-    }
-    $charsets->{$table} = $charset;
-  }
+  my $charsets = $self->show_charsets($database);
   
   $c->render(
     controller => 'mysqlviewerlite',
@@ -357,19 +339,78 @@ sub show_null_allowed_columns {
   my ($self, $database) = @_;
   my $tables = $self->show_tables($database);
   my $null_allowed_columns = {};
+  
   for my $table (@$tables) {
-    my $show_create_table = $self->show_create_table($database, $table) || '';
-    my @lines = split(/\n/, $show_create_table);
-    my $null_allowed_column = [];
-    for my $line (@lines) {
-      next if /^\s*`/ || $line =~ /NOT\s+NULL/i;
-      if ($line =~ /^\s+(`\w+?`)/) {
-        push @$null_allowed_column, $1;
-      }
-    }
+    my $null_allowed_column = $self->show_null_allowed_column($database, $table);
     $null_allowed_columns->{$table} = $null_allowed_column;
   }
   return $null_allowed_columns;
+}
+
+sub show_null_allowed_column {
+  my ($self, $database, $table) = @_;
+  
+  my $show_create_table = $self->show_create_table($database, $table) || '';
+  my @lines = split(/\n/, $show_create_table);
+  my $null_allowed_column = [];
+  for my $line (@lines) {
+    next if /^\s*`/ || $line =~ /NOT\s+NULL/i;
+    if ($line =~ /^\s+(`\w+?`)/) {
+      push @$null_allowed_column, $1;
+    }
+  }
+  return $null_allowed_column;
+}
+
+
+sub show_database_engines {
+  my ($self, $database) = @_;
+  
+  my $tables = $self->show_tables($database);
+  my $database_engines = {};
+  for my $table (@$tables) {
+    my $database_engine = $self->show_database_engine($database, $table);
+    $database_engines->{$table} = $database_engine;
+  }
+  
+  return $database_engines;
+}
+
+sub show_database_engine {
+  my ($self, $database, $table) = @_;
+  
+  my $show_create_table = $self->show_create_table($database, $table) || '';
+  my $database_engine = '';
+  if ($show_create_table =~ /ENGINE=(.+?)(\s+|$)/i) {
+    $database_engine = $1;
+  }
+  
+  return $database_engine;
+}
+
+sub show_charsets {
+  my ($self, $database) = @_;
+  
+  my $tables = $self->show_tables($database);
+  my $charsets = {};
+  for my $table (@$tables) {
+    my $charset = $self->show_charset($database, $table);
+    $charsets->{$table} = $charset;
+  }
+  
+  return $charsets;
+}
+
+sub show_charset {
+  my ($self, $database, $table) = @_;
+  
+  my $show_create_table = $self->show_create_table($database, $table) || '';
+  my $charset = '';
+  if ($show_create_table =~ /CHARSET=(.+?)(\s+|$)/i) {
+    $charset = $1;
+  }
+  
+  return $charset;
 }
 
 sub show_databases {
