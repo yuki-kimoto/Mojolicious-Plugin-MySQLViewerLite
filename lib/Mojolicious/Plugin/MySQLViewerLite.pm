@@ -21,46 +21,37 @@ sub register {
   # Add template path
   $self->add_template_path($app->renderer, __PACKAGE__);
   
-  
   # Set Attribute
   $self->dbi->dbh($dbh);
   $self->prefix($prefix);
   
-  $self->create_routes(
-    $r,
+  # Routes
+  $r = $r->waypoint("/$prefix")->via('get')->to(
+    'mysqlviewerlite#default',
     namespace => 'Mojolicious::Plugin::MySQLViewerLite',
-    controller => 'mysqlviewerlite',
     plugin => $self,
     prefix => $self->prefix,
-    main_title => 'MySQL Viewer Lite'
+    main_title => 'MySQL Viewer Lite',
   );
-}
-
-sub add_renderer_path {
-  my ($self, $renderer) = @_;
-  my $class = __PACKAGE__;
-  $class =~ s/::/\//g;
-  $class .= '.pm';
-  my $public = abs_path dirname $INC{$class};
-  push @{$renderer->paths}, "$public/MySQLViewerLite/templates";
-  $self->SUPER::add_renderer_path($renderer);
-}
-
-sub create_routes {
-  my ($self, $r, %opt) = @_;
+  $r->get('/tables')->to('#tables');
+  $r->get('/table')->to('#table');
+  $r->get('/showcreatetables')->to('#showcreatetables');
+  $r->get('/showprimarykeys')->to('#showprimarykeys');
+  $r->get('/shownullallowedcolumns')->to('#shownullallowedcolumns');
+  $r->get('/showdatabaseengines')->to('#showdatabaseengines');
+  $r->get('/showcharsets')->to('#showcharsets');
+  $r->get('/select')->to('#select');
   
-  $r = $self->SUPER::create_routes($r, %opt);
-  $r->get('/showdatabaseengines')->to(%opt, action => 'showdatabaseengines');
-  $r->get('/showcharsets')->to(%opt, action => 'showcharsets');
-
-  return $r;
+  # Routes (MySQL specific)
+  $r->get('/showdatabaseengines')->to('#showdatabaseengines');
+  $r->get('/showcharsets')->to('#showcharsets');
 }
 
 1;
 
 =head1 NAME
 
-Mojolicious::Plugin::MySQLViewerLite - Mojolicious plugin to display mysql database information
+Mojolicious::Plugin::MySQLViewerLite - Mojolicious plugin to display MySQL database information
 
 =head1 SYNOPSYS
 
