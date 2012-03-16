@@ -18,8 +18,9 @@ sub register {
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
   my $r = $conf->{route} // $app->routes;
   
-  # Add Renderer path
-  $self->add_renderer_path($app->renderer);
+  # Add template path
+  $self->add_template_path($app->renderer, __PACKAGE__);
+  
   
   # Set Attribute
   $self->dbi->dbh($dbh);

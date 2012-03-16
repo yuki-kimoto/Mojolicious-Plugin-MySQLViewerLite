@@ -47,13 +47,14 @@ sub register {
   );
 }
 
-sub add_renderer_path {
-  my ($self, $renderer) = @_;
-  my $class = __PACKAGE__;
+sub add_template_path {
+  my ($self, $renderer, $class) = @_;
   $class =~ s/::/\//g;
   $class .= '.pm';
-  my $public = abs_path dirname $INC{$class};
-  push @{$renderer->paths}, "$public/SQLiteViewerLite/templates";
+  my $public = abs_path $INC{$class};
+  $public =~ s/\.pm$//;
+  warn $public;
+  push @{$renderer->paths}, "$public/templates";
 }
 
 sub create_routes {
