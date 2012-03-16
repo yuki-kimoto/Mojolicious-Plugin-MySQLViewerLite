@@ -1,5 +1,5 @@
 package Mojolicious::Plugin::MySQLViewerLite::Command;
-use Mojo::Base 'Mojolicious::Plugin::SQLiteViewerLite::Command';
+use Mojo::Base 'Mojolicious::Plugin::MySQLViewerLite::Base::Command';
 
 sub current_database {
   my $self = shift;
