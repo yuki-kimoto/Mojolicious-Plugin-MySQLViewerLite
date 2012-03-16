@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "Select * from $table limit 0, 1000";
+% layout "$controller/common", title => "Select * from $table limit 0, 1000";
 
 <h2>select * from <i><%= $table %></i> limit 0, 1000</h2>
 

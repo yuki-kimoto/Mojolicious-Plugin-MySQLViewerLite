@@ -1,6 +1,6 @@
 use 5.001001;
 package Mojolicious::Plugin::MySQLViewerLite;
-use Mojo::Base 'Mojolicious::Plugin::SQLiteViewerLite';
+use Mojo::Base 'Mojolicious::Plugin::MySQLViewerLite::Base';
 use File::Basename 'dirname';
 use Cwd 'abs_path';
 use Mojolicious::Plugin::MySQLViewerLite::Command;
@@ -28,7 +28,7 @@ sub register {
   $self->create_routes(
     $r,
     namespace => 'Mojolicious::Plugin::MySQLViewerLite',
-    controller => 'controller',
+    controller => 'mysqlviewerlite',
     plugin => $self,
     prefix => $self->prefix,
     main_title => 'MySQL Viewer Lite'

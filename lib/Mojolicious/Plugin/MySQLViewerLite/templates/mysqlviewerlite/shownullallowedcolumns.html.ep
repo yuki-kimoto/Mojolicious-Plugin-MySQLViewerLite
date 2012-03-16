@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "Null allowed columns in $database";
+% layout "$controller/common", title => "Null allowed columns in $database";
 % my $tables = [sort keys %$null_allowed_columns];
 <h2>Null allowed columns in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>

@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "Database engines in $database ";
+% layout "$controller/common", title => "Database engines in $database ";
 % my $tables = [sort keys %$database_engines];
 <h2>Database engines in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>

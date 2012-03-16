@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "Primary keys in $database";
+% layout "$controller/common", title => "Primary keys in $database";
 % my $tables = [sort keys %$primary_keys];
 <h2>Primary keys in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>

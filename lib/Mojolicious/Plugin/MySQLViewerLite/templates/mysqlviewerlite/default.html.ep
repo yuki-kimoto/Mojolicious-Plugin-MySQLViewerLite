@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common';
+% layout "$controller/common";
 <h2>Databases</h2>
 <ul>
 % for my $database (sort @$databases) {

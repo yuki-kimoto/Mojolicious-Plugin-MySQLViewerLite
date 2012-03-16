@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "$table in $database";
+% layout "$controller/common", title => "$table in $database";
 <h2>Table <i><%= $table %></i> in <%= $database %></h2>
 <h3>show create table</h3>
 <pre><%= $table_def %></pre>

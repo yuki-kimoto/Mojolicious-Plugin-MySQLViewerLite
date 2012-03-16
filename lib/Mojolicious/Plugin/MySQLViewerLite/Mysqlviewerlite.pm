@@ -1,11 +1,5 @@
-package Mojolicious::Plugin::MySQLViewerLite::Controller;
-use Mojo::Base 'Mojolicious::Plugin::SQLiteViewerLite::Controller';
-
-sub tables {
-  my $self = shift;
-  $self->stash->{template} = 'mysqlviewerlite/tables';
-  $self->SUPER::tables;
-}
+package Mojolicious::Plugin::MySQLViewerLite::Mysqlviewerlite;
+use Mojo::Base 'Mojolicious::Plugin::MySQLViewerLite::Base::Mysqlviewerlite';
 
 sub showdatabaseengines {
   my $self = shift;;

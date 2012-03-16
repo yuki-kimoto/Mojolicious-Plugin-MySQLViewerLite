@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "Tables in $database";
+% layout "$controller/common", title => "Tables in $database";
 
 %= stylesheet begin
   ul {

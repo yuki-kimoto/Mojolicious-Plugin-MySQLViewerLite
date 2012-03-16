@@ -1,4 +1,4 @@
-% layout 'sqliteviewerlite/common', title => "Charsets in $database ";
+% layout "$controller/common", title => "Charsets in $database ";
 % my $tables = [sort keys %$charsets];
 <h2>Charsets in <i><%= $database %></i> (<%= @$tables %>)</h2>
 <table>
