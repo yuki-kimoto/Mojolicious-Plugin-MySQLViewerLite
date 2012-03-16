@@ -19,7 +19,9 @@
     <tr>
       % for my $k (0 .. 2) {
         <td>
-          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a></li>
+          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>">
+            <%= $tables->[$i + $k] %>
+          </a>
         </td>
       % }
     </tr>
@@ -28,9 +30,9 @@
 
 <h2>Utilities</h2>
 <ul>
-  <li><a href="<%= url_for("/$prefix/showcreatetables")->query(database => $database) %>">Show create tables</a></li>
-  <li><a href="<%= url_for("/$prefix/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
-  <li><a href="<%= url_for("/$prefix/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
-  <li><a href="<%= url_for("/$prefix/showdatabaseengines")->query(database => $database) %>">Show database engines</a></li>
-  <li><a href="<%= url_for("/$prefix/showcharsets")->query(database => $database) %>">Show charsets</a></li>
+  % for my $utility (@$utilities) {
+    % my $path = $utility->{path};
+    % my $title = $utility->{title};
+    <li><a href="<%= url_for("/$prefix/$path")->query(database => $database) %>"><%= $title %></a></li>
+  % }
 </ul>
