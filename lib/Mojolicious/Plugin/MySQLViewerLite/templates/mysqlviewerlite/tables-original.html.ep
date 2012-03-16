@@ -1,0 +1,34 @@
+% layout 'sqliteviewerlite/common', title => "Tables in $database";
+
+%= stylesheet begin
+  ul {
+    margin-left: 8px;
+    font-size: 150%;
+    list-style-type: circle;
+  }
+
+  li {
+    margin-bottom: 6px;
+  }
+
+% end
+
+<h2>Tables in <i><%= $database %></i> (<%= @$tables %>)</h2>
+<table>
+  % for (my $i = 0; $i < @$tables; $i += 3) {
+    <tr>
+      % for my $k (0 .. 2) {
+        <td>
+          <a href="<%= url_for("/$prefix/table")->query(database => $database, table => $tables->[$i + $k]) %>"><%= $tables->[$i + $k] %></a></li>
+        </td>
+      % }
+    </tr>
+  % }
+</table>
+
+<h2>Utilities</h2>
+<ul>
+  <li><a href="<%= url_for("/$prefix/showcreatetables")->query(database => $database) %>">Show create tables</a></li>
+  <li><a href="<%= url_for("/$prefix/showprimarykeys")->query(database => $database) %>">Show primary keys</a></li>
+  <li><a href="<%= url_for("/$prefix/shownullallowedcolumns")->query(database => $database) %>">Show null allowed columns</a></li>
+</ul>

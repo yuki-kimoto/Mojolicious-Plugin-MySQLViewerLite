@@ -1,0 +1,18 @@
+% layout 'sqliteviewerlite/common', title => "Select * from $table limit 0, 1000";
+
+<h2>select * from <i><%= $table %></i> limit 0, 1000</h2>
+
+<table>
+<tr>
+  % for my $h (@$header) {
+      <th><%= $h %></th>
+  % }
+</tr>
+% for my $row (@$rows) {
+  <tr>
+    % for my $data (@$row) {
+      <td><%= $data %></td>
+    % }
+  </tr>
+% }
+</table>
