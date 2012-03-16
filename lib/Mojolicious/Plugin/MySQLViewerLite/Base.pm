@@ -5,7 +5,6 @@ use DBIx::Custom;
 use Validator::Custom;
 use File::Basename 'dirname';
 use Cwd 'abs_path';
-use Mojolicious::Plugin::SQLiteViewerLite::Command;
 use Carp 'croak';
 
 has 'prefix';
