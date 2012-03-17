@@ -108,6 +108,14 @@ $t->get_ok("/mysqlviewerlite/select?database=$database&table=table1")
   ->content_like(qr/3/)
   ->content_like(qr/4/);
 
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table1&condition_column=column1_2&condition_value=4")
+  ->content_like(qr#\Qselect * from <i>table1</i>#)
+  ->content_like(qr/column1_1/)
+  ->content_like(qr/column1_2/)
+  ->content_unlike(qr/\b2\b/)
+  ->content_like(qr/\b3\b/)
+  ->content_like(qr/\b4\b/);
+
 # Show create tables page
 $t->get_ok("/mysqlviewerlite/showcreatetables?database=$database")
   ->content_like(qr/Create tables/)
@@ -231,4 +239,145 @@ $t->get_ok("/other/showdatabaseengines?database=$database")
   ->content_like(qr/\Q(InnoDB)/)
   ->content_like(qr/table3/);
 
+# Paging test
+$app = Test1->new;
+$t->app($app);
+# Paging
+eval { $dbi->execute('drop table table_page') };
+$dbi->execute('create table table_page (column_a varchar(10), column_b varchar(10))');
+$dbi->insert({column_a => 'a', column_b => 'b'}, table => 'table_page') for (1 .. 3510);
+
+__END__
+
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page")
+  ->content_like(qr#\Qselect * from <i>table_page</i>#)
+  ->content_like(qr/3510/)
+  ->content_like(qr/1/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/)
+  ->content_like(qr/5/)
+  ->content_like(qr/6/)
+  ->content_like(qr/7/)
+  ->content_like(qr/8/)
+  ->content_like(qr/9/)
+  ->content_like(qr/10/)
+  ->content_like(qr/11/)
+  ->content_like(qr/12/)
+  ->content_like(qr/13/)
+  ->content_like(qr/14/)
+  ->content_like(qr/15/)
+  ->content_like(qr/16/)
+  ->content_like(qr/17/)
+  ->content_like(qr/18/)
+  ->content_like(qr/19/)
+  ->content_like(qr/20/)
+  ->content_unlike(qr/21/);
+
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page&page=11")
+  ->content_like(qr#\Qselect * from <i>table_page</i>#)
+  ->content_like(qr/3510/)
+  ->content_like(qr/1/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/)
+  ->content_like(qr/5/)
+  ->content_like(qr/6/)
+  ->content_like(qr/7/)
+  ->content_like(qr/8/)
+  ->content_like(qr/9/)
+  ->content_like(qr/10/)
+  ->content_like(qr/11/)
+  ->content_like(qr/12/)
+  ->content_like(qr/13/)
+  ->content_like(qr/14/)
+  ->content_like(qr/15/)
+  ->content_like(qr/16/)
+  ->content_like(qr/17/)
+  ->content_like(qr/18/)
+  ->content_like(qr/19/)
+  ->content_like(qr/20/)
+  ->content_unlike(qr/21/);
+
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page&page=12")
+  ->content_like(qr#\Qselect * from <i>table_page</i>#)
+  ->content_like(qr/3510/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/)
+  ->content_like(qr/5/)
+  ->content_like(qr/6/)
+  ->content_like(qr/7/)
+  ->content_like(qr/8/)
+  ->content_like(qr/9/)
+  ->content_like(qr/10/)
+  ->content_like(qr/11/)
+  ->content_like(qr/12/)
+  ->content_like(qr/13/)
+  ->content_like(qr/14/)
+  ->content_like(qr/15/)
+  ->content_like(qr/16/)
+  ->content_like(qr/17/)
+  ->content_like(qr/18/)
+  ->content_like(qr/19/)
+  ->content_like(qr/20/)
+  ->content_like(qr/21/)
+  ->content_unlike(qr/22/);
+
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page&page=36")
+  ->content_like(qr#\Qselect * from <i>table_page</i>#)
+  ->content_like(qr/3510/)
+  ->content_unlike(qr/\b16\b/)
+  ->content_like(qr/17/)
+  ->content_like(qr/18/)
+  ->content_like(qr/19/)
+  ->content_like(qr/20/)
+  ->content_like(qr/21/)
+  ->content_like(qr/22/)
+  ->content_like(qr/23/)
+  ->content_like(qr/24/)
+  ->content_like(qr/25/)
+  ->content_like(qr/26/)
+  ->content_like(qr/27/)
+  ->content_like(qr/28/)
+  ->content_like(qr/29/)
+  ->content_like(qr/30/)
+  ->content_like(qr/31/)
+  ->content_like(qr/32/)
+  ->content_like(qr/33/)
+  ->content_like(qr/34/)
+  ->content_like(qr/35/)
+  ->content_like(qr/36/);
+
+$dbi->delete_all(table => 'table_page');
+$dbi->insert({column_a => 'a', column_b => 'b'}, table => 'table_page') for (1 .. 800);
+
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page")
+  ->content_like(qr#\Qselect * from <i>table_page</i>#)
+  ->content_like(qr/800/)
+  ->content_like(qr/1/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/)
+  ->content_like(qr/5/)
+  ->content_like(qr/6/)
+  ->content_like(qr/7/)
+  ->content_like(qr/\b8\b/)
+  ->content_unlike(qr/\b9\b/);
+
+$dbi->delete_all(table => 'table_page');
+$dbi->insert({column_a => 'a', column_b => 'b'}, table => 'table_page') for (1 .. 801);
+
+$t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page")
+  ->content_like(qr#\Qselect * from <i>table_page</i>#)
+  ->content_like(qr/801/)
+  ->content_like(qr/1/)
+  ->content_like(qr/2/)
+  ->content_like(qr/3/)
+  ->content_like(qr/4/)
+  ->content_like(qr/5/)
+  ->content_like(qr/6/)
+  ->content_like(qr/7/)
+  ->content_like(qr/\b8\b/)
+  ->content_like(qr/\b9\b/)
 

@@ -62,7 +62,7 @@ sub register {
 
 =head1 NAME
 
-Mojolicious::Plugin::MySQLViewerLite - Mojolicious plugin to display MySQL database information
+Mojolicious::Plugin::MySQLViewerLite - Mojolicious plugin to display MySQL database information on browser
 
 =head1 SYNOPSYS
 
@@ -97,7 +97,7 @@ Display C<show create table>
 
 =item *
 
-Select * from TABLE limit 0, 1000
+Select * from TABLE
 
 =item *
 
@@ -107,11 +107,23 @@ Display C<primary keys>, C<null allowed columnes>, C<database engines> and C<cha
 
 =head1 OPTIONS
 
+=head2 C<connector>
+
+  connector => $connector
+
+Connector object such as L<DBIx::Connector> to connect to database.
+
+  my $connector = DBIx::Connector->connect(...);
+
+Connector has C<dbh> method to get database handle.
+
 =head2 C<dbh>
 
   dbh => $dbh
 
 Database handle object in L<DBI>.
+
+  my $dbh = DBI->connect(...);
 
 =head2 C<prefix>
 

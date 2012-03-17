@@ -1,6 +1,16 @@
 % layout "$controller/common", title => "Select * from $table limit 0, 1000";
 
 <h2>select * from <i><%= $table %></i></h2>
+<form method="get" action="<%= url_for %>" >
+  <div class="condition">
+    where <%= select_field condition_column => $header %>
+      like
+      <%= input_tag 'condition_value', size => 50 %>
+      <%= submit_button 'Search' %>
+      <%= hidden_field database => param('database') %>
+      <%= hidden_field table => param('table') %>
+</form>
+</div>
 <div style="margin-left:40px; margin-bottom:15px; font-size:150%">
   Total <i><%= $pager->total_entries %></i> count
 </div>

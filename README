@@ -1,6 +1,6 @@
 Mojolicious::Plugin::MySQLViewerLite
 
-  Mojolicious plugin to display mysql database information
+  Mojolicious plugin to display mysql database information on browser
 
 SYNOPSYS
 
@@ -16,12 +16,12 @@ SYNOPSYS
 DESCRIPTION
 
   Mojolicious::Plugin::MySQLViewerLite is Mojolicious plugin
-  to display MySQL database information on your browser.
+  to display MySQL database information on browser.
 
   This module have the following features.
 
     - Display all table names
     - Display show create table
-    - Select * from TABLE limit 0, 1000
+    - Select * from TABLE
     - Display primary keys, null allowed columnes,
-      and database engines in all tables.
+      database engines, and charsets in all tables.

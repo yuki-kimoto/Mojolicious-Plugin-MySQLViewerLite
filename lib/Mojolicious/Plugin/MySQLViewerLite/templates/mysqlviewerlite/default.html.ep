@@ -3,8 +3,10 @@
 <ul>
 % for my $database (sort @$databases) {
 <li>
-  <a href="<%= url_for("/$prefix/tables")->query(database => $database) %>"><%= $database %>
-  %= $current_database eq $database ? '(current)' : ''
+  <a href="<%= url_for("/$prefix/tables")->query(database => $database) %>">
+    <%= $database %>
+    %= $current_database eq $database ? '(current)' : ''
+  </a>
 </li>
 % }
 </ul>
