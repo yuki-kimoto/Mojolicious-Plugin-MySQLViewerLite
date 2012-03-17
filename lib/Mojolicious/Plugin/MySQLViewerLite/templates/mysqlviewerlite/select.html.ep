@@ -1,6 +1,10 @@
 % layout "$controller/common", title => "Select * from $table limit 0, 1000";
 
-<h2>select * from <i><%= $table %></i> limit 0, 1000</h2>
+<h2>select * from <i><%= $table %></i></h2>
+<div style="margin-left:40px; margin-bottom:15px; font-size:150%">
+  Total <i><%= $pager->total_entries %></i> count
+</div>
+%= include "$controller/pagenavi";
 
 <table>
 <tr>
@@ -16,3 +20,5 @@
   </tr>
 % }
 </table>
+
+%= include "$controller/pagenavi";

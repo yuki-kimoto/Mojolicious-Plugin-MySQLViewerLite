@@ -5,7 +5,7 @@ use File::Basename 'dirname';
 use Cwd 'abs_path';
 use Mojolicious::Plugin::MySQLViewerLite::Command;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 has command => sub {
   my $self = shift;
@@ -14,18 +14,20 @@ has command => sub {
 
 sub register {
   my ($self, $app, $conf) = @_;
-  my $dbh = $conf->{dbh};
   my $prefix = $conf->{prefix} // 'mysqlviewerlite';
-  my $r = $conf->{route} // $app->routes;
+  
+  # Database
+  my $connector = $conf->{connector};
+  my $dbh = $conf->{dbh};
+  if ($connector) { $self->dbi->connector($connector) }
+  else { $self->dbi->dbh($dbh) }
   
   # Add template path
   $self->add_template_path($app->renderer, __PACKAGE__);
   
-  # Set Attribute
-  $self->dbi->dbh($dbh);
-  $self->prefix($prefix);
-  
   # Routes
+  my $r = $conf->{route} // $app->routes;
+  $self->prefix($prefix);
   $r = $r->waypoint("/$prefix")->via('get')->to(
     'mysqlviewerlite#default',
     namespace => 'Mojolicious::Plugin::MySQLViewerLite',
