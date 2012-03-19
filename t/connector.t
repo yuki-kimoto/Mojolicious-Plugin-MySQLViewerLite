@@ -4,7 +4,7 @@ use warnings;
 use DBIx::Custom;
 use Test::Mojo;
 
-plan skip => "required DBIx::Connector"
+plan skip_all => "required DBIx::Connector"
   unless eval { require DBIx::Connector; 1};
 
 {

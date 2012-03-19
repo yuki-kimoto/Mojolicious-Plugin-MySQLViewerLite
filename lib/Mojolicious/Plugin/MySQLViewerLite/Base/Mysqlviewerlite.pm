@@ -97,6 +97,29 @@ sub showcreatetables {
   );
 }
 
+sub showselecttables {
+  my $self = shift;;
+  
+  my $plugin = $self->stash->{plugin};
+  my $command = $plugin->command;
+
+  # Validation
+  my $params = $command->params($self);
+  my $rule = [
+    database => {default => ''} => [
+      'safety_name'
+    ]
+  ];
+  my $vresult = $plugin->validator->validate($params, $rule);
+  my $database = $vresult->data->{database};
+  my $tables = $command->show_tables($database);
+  
+  $self->render(
+    database => $database,
+    tables => $tables
+  );
+}
+
 sub showprimarykeys {
   my $self = shift;;
   

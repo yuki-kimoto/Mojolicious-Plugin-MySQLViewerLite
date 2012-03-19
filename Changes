@@ -1,3 +1,11 @@
+0.11
+  - improved design
+  - added show select tables page
+
+0.10
+  - added dbi option
+0.09
+  - fixed test
 0.08
   - added simple table search
   - added connector option

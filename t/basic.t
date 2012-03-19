@@ -127,6 +127,14 @@ $t->get_ok("/mysqlviewerlite/showcreatetables?database=$database")
   ->content_like(qr/column2_2/)
   ->content_like(qr/table3/);
 
+# Show select tables page
+$t->get_ok("/mysqlviewerlite/showselecttables?database=$database")
+  ->content_like(qr/Select tables/)
+  ->content_like(qr/table1/)
+  ->content_like(qr#\Q/select?#)
+  ->content_like(qr/table2/)
+  ->content_like(qr/table3/);
+
 # Show Primary keys page
 $t->get_ok("/mysqlviewerlite/showprimarykeys?database=$database")
   ->content_like(qr/Primary keys/)
@@ -175,7 +183,7 @@ my $route_test;
       $route_test = 1;
       return 1;
     });
-    plugin 'MySQLViewerLite', dbh => $dbi->dbh, route => $b, prefix => 'other';
+    plugin 'MySQLViewerLite', dbi => $dbi, route => $b, prefix => 'other';
 }
 $app = Test2->new;
 $t = Test::Mojo->new($app);

@@ -58,7 +58,7 @@ sub show_create_table { croak "Unimplemented" }
 
 sub params {
   my ($self, $c) = @_;
-  my $params = {map {$_ => $c->param($_)} $c->param};
+  my $params = {map {$_ => scalar $c->param($_)} $c->param};
   return $params;
 }
 
