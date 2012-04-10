@@ -9,12 +9,13 @@
       <%= submit_button 'Search' %>
       <%= hidden_field database => param('database') %>
       <%= hidden_field table => param('table') %>
+  </div>
 </form>
-</div>
 <div style="margin-left:40px; margin-bottom:15px; font-size:150%">
-  Total <i><%= $pager->total_entries %></i> count
+  % my $first_count = ($pager->current_page - 1) * $pager->entries_per_page + 1;
+  % my $last_count = $first_count + $pager->entries_on_this_page - 1;
+  <%= $first_count %> to <%= $last_count %> (Total <i><%= $pager->total_entries %></i> count)
 </div>
-%= include "$controller/pagenavi";
 
 <table>
 <tr>

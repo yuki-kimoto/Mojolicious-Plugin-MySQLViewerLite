@@ -96,6 +96,8 @@
       margin-left:40px;
       margin-bottom:20px;
       font-size: 145%;
+      padding: 5px;
+      background-color: #EEEEEE;
     }
 
     pre {
