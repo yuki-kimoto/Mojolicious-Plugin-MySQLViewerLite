@@ -82,13 +82,7 @@ sub show_databases {
 
 sub show_tables { 
   my ($self, $database) = @_;
-  my $table_rows;
-  eval { $table_rows = $self->dbi->execute("show tables from $database")->all };
-  $table_rows ||= [];
-  my $tables = [];
-  for my $table_row (@$table_rows) {
-    push @$tables, $table_row->{(keys %$table_row)[0]};
-  }
+  my $tables = $self->dbi->execute("show tables from $database")->values;
   return $tables;
 }
 

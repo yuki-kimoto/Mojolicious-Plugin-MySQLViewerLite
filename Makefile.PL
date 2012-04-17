@@ -16,7 +16,7 @@ WriteMakefile(
         'Test::More' => 0,
         'Mojolicious' => '2.59',
         'Validator::Custom' => '0.1426',
-        'DBIx::Custom' => '0.24',
+        'DBIx::Custom' => '0.25',
         'Data::Page' => '2.02'
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
