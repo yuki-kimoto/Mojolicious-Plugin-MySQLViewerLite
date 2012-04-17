@@ -5,7 +5,7 @@ use File::Basename 'dirname';
 use Cwd 'abs_path';
 use Mojolicious::Plugin::MySQLViewerLite::Command;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 has command => sub {
   my $self = shift;
@@ -30,36 +30,40 @@ sub register {
   # Routes
   my $r = $conf->{route} // $app->routes;
   $self->prefix($prefix);
-  $r = $r->waypoint("/$prefix")->via('get')->to(
-    'mysqlviewerlite#default',
-    namespace => 'Mojolicious::Plugin::MySQLViewerLite',
-    plugin => $self,
-    prefix => $self->prefix,
-    main_title => 'MySQL Viewer Lite',
-  );
-  $r->get('/tables')->to(
-    '#tables',
-    utilities => [
-      {path => 'showcreatetables', title => 'Show create tables'},
-      {path => 'showselecttables', title => 'Show select tables'},
-      {path => 'showprimarykeys', title => 'Show primary keys'},
-      {path => 'shownullallowedcolumns', title => 'Show null allowed columns'},
-      {path => 'showdatabaseengines', title => 'Show database engines'},
-      {path => 'showcharsets', title => 'Show charsets'}
-    ]
-  );
-  $r->get('/table')->to('#table');
-  $r->get('/showcreatetables')->to('#showcreatetables');
-  $r->get('/showselecttables')->to('#showselecttables');
-  $r->get('/showprimarykeys')->to('#showprimarykeys');
-  $r->get('/shownullallowedcolumns')->to('#shownullallowedcolumns');
-  $r->get('/showdatabaseengines')->to('#showdatabaseengines');
-  $r->get('/showcharsets')->to('#showcharsets');
-  $r->get('/select')->to('#select');
+  {
+    my $r = $r->route("/$prefix")->to(
+      'mysqlviewerlite#',
+      namespace => 'Mojolicious::Plugin::MySQLViewerLite',
+      plugin => $self,
+      prefix => $self->prefix,
+      main_title => 'MySQL Viewer Lite',
+    );
+    
+    $r->get('/')->to('#default');
+    $r->get('/tables')->to(
+      '#tables',
+      utilities => [
+        {path => 'showcreatetables', title => 'Show create tables'},
+        {path => 'showselecttables', title => 'Show select tables'},
+        {path => 'showprimarykeys', title => 'Show primary keys'},
+        {path => 'shownullallowedcolumns', title => 'Show null allowed columns'},
+        {path => 'showdatabaseengines', title => 'Show database engines'},
+        {path => 'showcharsets', title => 'Show charsets'}
+      ]
+    );
+    $r->get('/table')->to('#table');
+    $r->get('/showcreatetables')->to('#showcreatetables');
+    $r->get('/showselecttables')->to('#showselecttables');
+    $r->get('/showprimarykeys')->to('#showprimarykeys');
+    $r->get('/shownullallowedcolumns')->to('#shownullallowedcolumns');
+    $r->get('/showdatabaseengines')->to('#showdatabaseengines');
+    $r->get('/showcharsets')->to('#showcharsets');
+    $r->get('/select')->to('#select');
 
-  # Routes (MySQL specific)
-  $r->get('/showdatabaseengines')->to('#showdatabaseengines');
-  $r->get('/showcharsets')->to('#showcharsets');
+    # Routes (MySQL specific)
+    $r->get('/showdatabaseengines')->to('#showdatabaseengines');
+    $r->get('/showcharsets')->to('#showcharsets');
+  }
 }
 
 1;
