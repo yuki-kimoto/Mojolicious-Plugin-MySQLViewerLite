@@ -5,7 +5,7 @@ use File::Basename 'dirname';
 use Cwd 'abs_path';
 use Mojolicious::Plugin::MySQLViewerLite::Command;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 has command => sub {
   my $self = shift;
@@ -71,6 +71,16 @@ sub register {
 =head1 NAME
 
 Mojolicious::Plugin::MySQLViewerLite - Mojolicious plugin to display MySQL database information on browser
+
+=head1 CAUTION
+
+B<L<Mojolicious::Plugin::MySQLViewerLite> is merged into L<Mojolicious::Plugin::DBViewer>>.
+
+B<This module is DEPRECATED and will be removed from CPAN in 2018/4/1>.
+
+But you get it on github.
+
+  https://github.com/yuki-kimoto/Mojolicious-Plugin-MySQLViewerLite
 
 =head1 SYNOPSYS
 
