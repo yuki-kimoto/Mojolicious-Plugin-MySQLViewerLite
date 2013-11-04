@@ -34,4 +34,13 @@ sub add_template_path {
   push @{$renderer->paths}, "$public/templates";
 }
 
+sub add_static_path {
+  my ($self, $static, $class) = @_;
+  $class =~ s/::/\//g;
+  $class .= '.pm';
+  my $public = abs_path $INC{$class};
+  $public =~ s/\.pm$//;
+  push @{$static->paths}, "$public/public";
+}
+
 1;

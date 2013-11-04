@@ -1,3 +1,5 @@
+0.16 (DEPRECATED)
+  - fix test bug
 0.15 (DEPRECATED)
   - this module is merged into Mojolicious::Plugin::DBViewer.
   - this module is DEPRECATED and will be removed from CPAN in 2018/4/1.

@@ -7,7 +7,7 @@
     % }
     <%= $main_title %>
   </title>
-  %= javascript '/js/jquery.js'
+  %= javascript '/js/jquery-1.9.1.js'
   %= stylesheet begin 
     *, body {
       padding 0;

@@ -249,7 +249,7 @@ $t->get_ok("/other/showdatabaseengines?database=$database")
 
 # Paging test
 $app = Test1->new;
-$t->app($app);
+$t = Test::Mojo->new($app);
 # Paging
 eval { $dbi->execute('drop table table_page') };
 $dbi->execute('create table table_page (column_a varchar(10), column_b varchar(10))');
@@ -371,7 +371,7 @@ $t->get_ok("/mysqlviewerlite/select?database=$database&table=table_page")
   ->content_like(qr/6/)
   ->content_like(qr/7/)
   ->content_like(qr/\b8\b/)
-  ->content_unlike(qr/\b9\b/);
+  ->content_unlike(qr/ 9 /);
 
 $dbi->delete_all(table => 'table_page');
 $dbi->insert({column_a => 'a', column_b => 'b'}, table => 'table_page') for (1 .. 801);
