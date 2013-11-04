@@ -19,6 +19,11 @@ WriteMakefile(
         'DBIx::Custom' => '0.25',
         'Data::Page' => '2.02'
     },
+    META_MERGE   => {
+        resources => {
+            repository  =>  'https://github.com/yuki-kimoto/Mojolicious-Plugin-MySQLViewerLite',
+        },
+    },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Mojolicious-Plugin-MySQLViewerLite-*' },
 );
