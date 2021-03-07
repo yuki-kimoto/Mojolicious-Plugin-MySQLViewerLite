@@ -5,7 +5,7 @@ use File::Basename 'dirname';
 use Cwd 'abs_path';
 use Mojolicious::Plugin::MySQLViewerLite::Command;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 has command => sub {
   my $self = shift;
